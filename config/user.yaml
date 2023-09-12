@@ -1,0 +1,10 @@
+app:
+  name: srv.user
+  host: 0.0.0.0
+  port: 8888
+db:
+  host: mysql
+  port: 3306
+  database: user
+  username: root
+  password: root

@@ -1,0 +1,10 @@
+app:
+  name: srv.board
+  host: 0.0.0.0
+  port: 8889
+db:
+  host: mysql
+  port: 3306
+  database: board
+  username: root
+  password: root
