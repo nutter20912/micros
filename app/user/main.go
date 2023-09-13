@@ -34,7 +34,7 @@ func main() {
 
 	service.Init(
 		micro.Server(sgrpc.NewServer(server.Name(appName))),
-		micro.Address(fmt.Sprintf("workspace:%s", appPort)),
+		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Registry(re),
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),

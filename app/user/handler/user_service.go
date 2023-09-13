@@ -37,6 +37,7 @@ func (g *UserService) Register(
 
 	hashed, _ := hash.Make(req.Password)
 	user.Password = hashed
+	user.Name = req.Name
 
 	if result := db.Create(user); result.Error != nil {
 		return microErrors.InternalServerError("123", result.Error.Error())
@@ -103,13 +104,11 @@ func (g *UserService) Get(
 	}
 
 	rsp.Result = &userV1.Result{Code: 200, Message: "success"}
-	rsp.Data = &userV1.GetResponse_Data{
-		User: &userV1.GetResponse_Data_User{
-			Id:        userId,
-			Email:     user.Email,
-			Name:      user.Name,
-			CreatedAt: user.CreatedAt.String(),
-		},
+	rsp.Data = &userV1.User{
+		Id:        userId,
+		Email:     user.Email,
+		Name:      user.Name,
+		CreatedAt: user.CreatedAt.String(),
 	}
 
 	return nil
