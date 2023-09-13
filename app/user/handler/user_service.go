@@ -113,3 +113,26 @@ func (g *UserService) Get(
 
 	return nil
 }
+
+func (g *UserService) GetList(
+	ctx context.Context,
+	req *userV1.GetListRequest,
+	rsp *userV1.GetListResponse,
+) (err error) {
+	if err := req.Validate(); err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	db := mysql.Get()
+
+	var users []*userV1.User
+	if result := db.Table("users").Where("id IN ?", req.UserId).Scan(&users); result.Error != nil {
+		return microErrors.NotFound("123", result.Error.Error())
+	}
+
+	rsp.Result = &userV1.Result{Code: 200, Message: "success"}
+
+	rsp.Data = users
+
+	return nil
+}
