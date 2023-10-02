@@ -38,12 +38,16 @@ func main() {
 		micro.Registry(re),
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),
-		// micro.WrapHandler(wapper.NewAuthWapper(a)),
+		micro.WrapHandler(wapper.NewAuthWapper(a)),
 	)
 
 	boardV1.RegisterPostServiceHandler(
 		service.Server(),
-		new(handler.BoardService),
+		new(handler.PostService),
+	)
+	boardV1.RegisterCommentServiceHandler(
+		service.Server(),
+		new(handler.CommentService),
 	)
 
 	if err := service.Run(); err != nil {

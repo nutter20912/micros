@@ -6,7 +6,9 @@ import (
 
 type Post struct {
 	gorm.Model
-	Title   string `gorm:"type:varchar(50);not null"`
-	Content string `gorm:"type:varchar(500);not null"`
-	UserId  uint   `gorm:"not null"`
+	Title   string `json:"title" gorm:"type:varchar(50);not null"`
+	Content string `json:"content" gorm:"type:varchar(500);not null"`
+	UserId  string `json:"user_id" gorm:"not null"`
+
+	Comments []Comment `gorm:"foreignKey:PostId"`
 }
