@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 
 	"micros/app/board/models"
@@ -24,16 +25,36 @@ func (s *CommentService) GetAll(
 	}
 
 	db := mysql.Get()
+	tx := db.Table("comments").Where("post_id = ?", req.PostId)
+
+	if req.Cursor != nil && *req.Cursor != "" {
+		cursor, err := base64.StdEncoding.DecodeString(*req.Cursor)
+		if err != nil {
+			return microErrors.InternalServerError("123", err.Error())
+		}
+
+		if string(cursor) != "" {
+			tx.Where("id < ?", string(cursor))
+			fmt.Println(string(cursor))
+		}
+	}
+
 	var data []*boardV1.Comment
-	if result := db.Table("comments").
-		Where("post_id = ?", req.PostId).
-		Order("id desc").
-		Find(&data); result.Error != nil {
+	if result := tx.Order("id desc").Limit(PAGE_LIMIT).Find(&data); result.Error != nil {
 		return microErrors.InternalServerError("123", result.Error.Error())
+	}
+
+	next := ""
+	if len(data) == PAGE_LIMIT {
+		next = base64.StdEncoding.EncodeToString([]byte(data[len(data)-1].Id))
 	}
 
 	rsp.Result = &boardV1.Result{Code: 200, Message: "success"}
 	rsp.Data = data
+	rsp.Paginator = &boardV1.Paginator{
+		NextCursor: next,
+	}
+
 	return nil
 }
 
