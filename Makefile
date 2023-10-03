@@ -19,3 +19,7 @@ ifeq ($(strip $(path)),)
 endif
 debug::
 	dlv debug $(path) --headless --listen=:12345 --api-version=2
+
+.PHONY: submodule
+submodule:
+	git submodule update --init --recursive --remote
