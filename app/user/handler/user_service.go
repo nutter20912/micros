@@ -11,13 +11,16 @@ import (
 	"micros/database/mysql"
 	userV1 "micros/proto/user/v1"
 
+	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"gorm.io/gorm"
 )
 
-type UserService struct{}
+type UserService struct {
+	Service micro.Service
+}
 
 func (g *UserService) Register(
 	ctx context.Context,
@@ -41,6 +44,12 @@ func (g *UserService) Register(
 
 	if result := db.Create(user); result.Error != nil {
 		return microErrors.InternalServerError("123", result.Error.Error())
+	}
+
+	pub := micro.NewEvent("user.registered", g.Service.Client())
+	msg := &userV1.RegisteredEvent{UserId: fmt.Sprint(user.ID)}
+	if err := pub.Publish(context.Background(), msg); err != nil {
+		fmt.Printf("error publishing: %v", err)
 	}
 
 	rsp.Result = &userV1.Result{Code: 200, Message: "success"}

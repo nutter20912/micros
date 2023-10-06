@@ -22,6 +22,6 @@ RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
 COPY go.* ./
 
-RUN go mod download
+RUN go mod tidy
 
 COPY . /app

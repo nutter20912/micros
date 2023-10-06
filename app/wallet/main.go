@@ -3,11 +3,10 @@ package main
 import (
 	"fmt"
 	"log"
-	"micros/app/user/handler"
+	"micros/app/wallet/subscriber"
 	"micros/auth"
 	"micros/config"
-	"micros/database/mysql"
-	userV1 "micros/proto/user/v1"
+	"micros/database/mongo"
 	"micros/wapper"
 
 	_ "github.com/go-micro/plugins/v4/broker/nats"
@@ -20,8 +19,8 @@ import (
 )
 
 func init() {
-	config.Init("user")
-	mysql.Init()
+	config.Init("wallet")
+	mongo.Init()
 }
 
 func main() {
@@ -39,10 +38,7 @@ func main() {
 		micro.WrapHandler(wapper.NewAuthWapper(a)),
 	)
 
-	userV1.RegisterUserServiceHandler(
-		service.Server(),
-		&handler.UserService{Service: service},
-	)
+	micro.RegisterSubscriber("user.registered", service.Server(), new(subscriber.UserRegisterd))
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

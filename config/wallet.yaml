@@ -1,0 +1,10 @@
+app:
+  name: srv.wallet
+  host: 0.0.0.0
+  port: 8890
+db:
+  host: mongodb
+  port: 27017
+  database: wallet
+  username: wallet
+  password: wallet
