@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 
+	"micros/app/user/event"
 	"micros/app/user/models"
 	"micros/auth"
 	"micros/auth/hash"
@@ -46,11 +47,7 @@ func (g *UserService) Register(
 		return microErrors.InternalServerError("123", result.Error.Error())
 	}
 
-	pub := micro.NewEvent("user.registered", g.Service.Client())
-	msg := &userV1.RegisteredEvent{UserId: fmt.Sprint(user.ID)}
-	if err := pub.Publish(context.Background(), msg); err != nil {
-		fmt.Printf("error publishing: %v", err)
-	}
+	event.UserCreated{Client: g.Service.Client()}.Dispatch(fmt.Sprint(user.ID))
 
 	rsp.Result = &userV1.Result{Code: 200, Message: "success"}
 

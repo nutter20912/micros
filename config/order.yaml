@@ -1,10 +1,10 @@
 app:
-  name: srv.wallet
+  name: srv.order
   host: 0.0.0.0
-  port: 8890
+  port: 8891
 db:
   host: mongodb
   port: 27017
-  database: wallet
+  database: order
   username: paul
   password: paul

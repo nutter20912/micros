@@ -30,4 +30,10 @@ func Init(configName string) {
 	if err := viper.ReadInConfig(); err != nil {
 		log.Fatal(err)
 	}
+
+	viper.SetConfigFile(fmt.Sprintf("%s/config/topic.yaml", BasePath))
+
+	if err := viper.MergeInConfig(); err != nil {
+		log.Fatal(err)
+	}
 }

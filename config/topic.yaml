@@ -1,0 +1,5 @@
+topic:
+  user:
+    created: user.created
+  order:
+    created: order.created
