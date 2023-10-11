@@ -28,7 +28,7 @@ func (s *OrderService) CreateDepositEvent(
 
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	depositOrderEvent, err := models.CreateDepositOrderEvent(userId, req.Amount)
+	depositOrderEvent, err := new(models.DepositOrderEvent).Create(userId, req.Amount)
 	if err != nil {
 		fmt.Println(err)
 		return microErrors.BadRequest("123", "create fail")

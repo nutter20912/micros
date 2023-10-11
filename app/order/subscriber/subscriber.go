@@ -10,7 +10,7 @@ import (
 type InsertOrderEvent struct{}
 
 func (e *InsertOrderEvent) Handle(ctx context.Context, event *walletV1.TransactionEvent) error {
-	depositOrder, err := models.GetDepositOrder(context.Background(), event.OrderId)
+	depositOrder, err := new(models.DepositOrder).Get(event.OrderId)
 	if err != nil {
 		return err
 	}
@@ -20,7 +20,7 @@ func (e *InsertOrderEvent) Handle(ctx context.Context, event *walletV1.Transacti
 		status = orderV1.DepositStatus_DEPOSIT_STATUS_COMPLETED
 	}
 
-	models.InertDepositOrderEvent(depositOrder.Id, depositOrder.UserId, depositOrder.Amount, status)
+	new(models.DepositOrderEvent).Add(depositOrder.Id, depositOrder.UserId, depositOrder.Amount, status)
 
 	return nil
 }

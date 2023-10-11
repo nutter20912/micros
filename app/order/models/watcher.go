@@ -31,7 +31,7 @@ func OrderWatcher(client *mongo.Client) {
 			continue
 		}
 
-		if err := UpdateOrder(context.Background(), eventsCollection, event.Doc.OrderId); err != nil {
+		if err := new(DepositOrder).Update(context.Background(), eventsCollection, event.Doc.OrderId); err != nil {
 			fmt.Println(err)
 		}
 	}
