@@ -49,7 +49,7 @@ func main() {
 	micro.RegisterSubscriber(
 		viper.GetString("topic.wallet.transaction"),
 		service.Server(),
-		&subscriber.InsertOrderEvent{})
+		&subscriber.AddOrderEvent{})
 
 	go models.OrderWatcher(mongo.Get())
 

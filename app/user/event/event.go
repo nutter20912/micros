@@ -21,7 +21,7 @@ func (u UserCreated) Topic() string {
 func (u UserCreated) Dispatch(userId string) {
 	pub := micro.NewEvent(u.Topic(), u.Client)
 
-	msg := &userV1.RegisteredEvent{UserId: userId}
+	msg := &userV1.RegisteredEventMessage{UserId: userId}
 
 	if err := pub.Publish(context.Background(), msg); err != nil {
 		fmt.Printf("error publishing: %v", err)

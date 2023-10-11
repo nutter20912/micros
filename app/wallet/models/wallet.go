@@ -3,49 +3,46 @@ package models
 import (
 	"context"
 	"fmt"
-	walletV1 "micros/proto/wallet/v1"
-	"time"
+
+	mongodb "micros/database/mongo"
 
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type WalletEvent struct {
-	Id      primitive.ObjectID       `bson:"_id,omitempty"`
-	UserId  string                   `bson:"user_id,omitempty"`
-	OrderId string                   `bson:"order_id,omitempty"`
-	Time    string                   `bson:"event_time,omitempty"`
-	Type    walletV1.WalletEventType `bson:"event_type,omitempty"`
-	Change  float64                  `bson:"change,omitempty"`
-	Memo    string                   `bson:"memo,omitempty"`
-}
-
 var (
-	Wallet_TABLE = "wallets"
+	databaseName              = "wallet"
+	walletEventCollectionName = "wallet_event"
 )
 
-func InsertWalletEvent(ctx context.Context, c *mongo.Client, walletEvent *walletV1.WalletEvent) error {
-	coll := c.Database("wallet").Collection("wallet_event")
-
-	newWallet := WalletEvent{
-		Id:     primitive.NewObjectID(),
-		Time:   time.Now().Format(time.RFC3339),
-		Type:   walletEvent.Type,
-		UserId: walletEvent.UserId,
-		Change: walletEvent.Change,
-		Memo:   walletEvent.Memo,
-	}
-
-	if _, err := coll.InsertOne(context.Background(), newWallet); err != nil {
-		return err
-	}
-
-	return nil
+type Wallet struct {
+	UserId string  `bson:"user_id,omitempty"`
+	Amount float64 `bson:"amount,omitempty"`
 }
 
-func UpdateWallets(ctx context.Context, c *mongo.Client, userId string) error {
-	coll := c.Database("wallet").Collection("wallet_event")
+func (d *Wallet) DatabaseName() string {
+	return databaseName
+}
+
+func (w *Wallet) CollectionName() string {
+	return walletViewCollectionName
+}
+
+func (w *Wallet) Get(userId string) (*Wallet, error) {
+	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
+
+	var wallet Wallet
+	if err := coll.FindOne(context.Background(), bson.M{"_id": userId}).Decode(&wallet); err != nil {
+		return nil, err
+	}
+
+	return &wallet, nil
+}
+
+func (w *Wallet) Update(ctx context.Context, eventColl *mongo.Collection, userId string) error {
+	sortStage := bson.D{{Key: "$sort", Value: bson.D{
+		{Key: "time", Value: 1},
+	}}}
 
 	matchStage := bson.D{{Key: "$match", Value: bson.D{
 		{Key: "user_id", Value: userId},
@@ -54,14 +51,23 @@ func UpdateWallets(ctx context.Context, c *mongo.Client, userId string) error {
 	groupStage := bson.D{{Key: "$group", Value: bson.D{
 		{Key: "_id", Value: "$user_id"},
 		{Key: "amount", Value: bson.D{{Key: "$sum", Value: "$change"}}},
+		{Key: "created_at", Value: bson.D{{Key: "$first", Value: "$time"}}},
+		{Key: "updated_at", Value: bson.D{{Key: "$last", Value: "$time"}}},
+	}}}
+
+	projectStage := bson.D{{Key: "$project", Value: bson.D{
+		{Key: "user_id", Value: "$_id.user_id"},
+		{Key: "amount", Value: 1},
+		{Key: "created_at", Value: 1},
+		{Key: "updated_at", Value: 1},
 	}}}
 
 	mergeStage := bson.D{{Key: "$merge", Value: bson.D{
-		{Key: "into", Value: Wallet_TABLE},
+		{Key: "into", Value: w.CollectionName()},
 		{Key: "whenMatched", Value: "replace"},
 	}}}
 
-	cursor, err := coll.Aggregate(ctx, mongo.Pipeline{matchStage, groupStage, mergeStage})
+	cursor, err := eventColl.Aggregate(ctx, mongo.Pipeline{sortStage, matchStage, groupStage, projectStage, mergeStage})
 	if err != nil {
 		return err
 	}

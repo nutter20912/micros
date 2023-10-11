@@ -7,16 +7,16 @@ import (
 	walletV1 "micros/proto/wallet/v1"
 )
 
-type InsertOrderEvent struct{}
+type AddOrderEvent struct{}
 
-func (e *InsertOrderEvent) Handle(ctx context.Context, event *walletV1.TransactionEvent) error {
-	depositOrder, err := new(models.DepositOrder).Get(event.OrderId)
+func (e *AddOrderEvent) Handle(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
+	depositOrder, err := new(models.DepositOrder).Get(msg.OrderId)
 	if err != nil {
 		return err
 	}
 
 	status := orderV1.DepositStatus_DEPOSIT_STATUS_FAILED
-	if event.Success {
+	if msg.Success {
 		status = orderV1.DepositStatus_DEPOSIT_STATUS_COMPLETED
 	}
 

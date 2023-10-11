@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"micros/app/wallet/models"
 	"micros/app/wallet/subscriber"
 	"micros/auth"
 	"micros/config"
@@ -35,10 +36,19 @@ func main() {
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)),
-	)
+		micro.WrapHandler(wapper.NewAuthWapper(a)))
 
-	micro.RegisterSubscriber("user.registered", service.Server(), new(subscriber.UserRegisterd))
+	micro.RegisterSubscriber(
+		viper.GetString("topic.user.created"),
+		service.Server(),
+		&subscriber.UserRegisterd{Service: service})
+
+	micro.RegisterSubscriber(
+		viper.GetString("topic.order.created"),
+		service.Server(),
+		&subscriber.OrderCreated{Service: service})
+
+	go models.WalletWatcher(mongo.Get())
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)
