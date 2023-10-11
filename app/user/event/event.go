@@ -15,7 +15,7 @@ type UserCreated struct {
 }
 
 func (u UserCreated) Topic() string {
-	return viper.GetString("topic.user.registered")
+	return viper.GetString("topic.user.created")
 }
 
 func (u UserCreated) Dispatch(userId string) {

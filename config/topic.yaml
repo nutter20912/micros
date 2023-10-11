@@ -3,3 +3,5 @@ topic:
     created: user.created
   order:
     created: order.created
+  wallet:
+    transaction: wallet.transaction
