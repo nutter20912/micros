@@ -35,10 +35,11 @@ func (s *OrderService) CreateDepositEvent(
 	}
 
 	rsp.Data = &orderV1.DepositOrderEvent{
-		Id:     depositOrderEvent.Id.String(),
-		UserId: depositOrderEvent.UserId,
-		Status: depositOrderEvent.Status,
-		Amount: depositOrderEvent.Amount,
+		Id:      depositOrderEvent.Id.String(),
+		OrderId: depositOrderEvent.OrderId,
+		UserId:  depositOrderEvent.UserId,
+		Status:  depositOrderEvent.Status,
+		Amount:  depositOrderEvent.Amount,
 	}
 
 	event.OrderCreated{Client: s.Service.Client()}.Dispatch(rsp.Data)
