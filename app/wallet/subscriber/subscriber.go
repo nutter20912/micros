@@ -2,6 +2,7 @@ package subscriber
 
 import (
 	"context"
+	"errors"
 	"micros/app/wallet/event"
 	"micros/app/wallet/models"
 	orderV1 "micros/proto/order/v1"
@@ -24,7 +25,7 @@ func (s *UserRegisterd) Handle(ctx context.Context, event *userV1.RegisteredEven
 	}
 
 	if err := new(models.WalletEvent).Add(&walletEvent); err != nil {
-		return err
+		return errors.New("add wallet_event error")
 	}
 
 	return nil
@@ -35,17 +36,17 @@ type OrderCreated struct {
 }
 
 func (o *OrderCreated) DepositHandle(ctx context.Context, e *orderV1.DepositOrderEvent) error {
-	_, err := new(models.Wallet).Get(e.UserId)
-	if err != nil {
-		return err
-	}
+	msg := &walletV1.TransactionEventMessage{
+		UserId:  e.UserId,
+		OrderId: e.OrderId,
+		Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT,
+		Success: true}
 
-	t, err := func() (*walletV1.TransactionEventMessage, error) {
-		msg := &walletV1.TransactionEventMessage{
-			UserId:  e.UserId,
-			OrderId: e.OrderId,
-			Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT,
-			Success: true}
+	err := func() error {
+		_, err := new(models.Wallet).Get(e.UserId)
+		if err != nil {
+			return errors.New("wallet not found")
+		}
 
 		newWalletEvent := &walletV1.WalletEvent{
 			UserId:  e.UserId,
@@ -54,17 +55,18 @@ func (o *OrderCreated) DepositHandle(ctx context.Context, e *orderV1.DepositOrde
 			Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT}
 
 		if err := new(models.WalletEvent).Add(newWalletEvent); err != nil {
-			return nil, err
+			return errors.New("add wallet_event error")
 		}
 
-		return msg, nil
+		return nil
 	}()
 
 	if err != nil {
-		return err
+		msg.Memo = err.Error()
+		msg.Success = false
 	}
 
-	event.TransactionEvent{Client: o.Service.Client()}.Dispatch(t)
+	event.TransactionEvent{Client: o.Service.Client()}.Dispatch(msg)
 
 	return nil
 }

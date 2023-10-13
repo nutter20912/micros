@@ -3,11 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"micros/app/wallet/models"
+	"micros/app/wallet/handler"
 	"micros/app/wallet/subscriber"
 	"micros/auth"
 	"micros/config"
 	"micros/database/mongo"
+	walletV1 "micros/proto/wallet/v1"
 	"micros/wapper"
 
 	_ "github.com/go-micro/plugins/v4/broker/nats"
@@ -36,7 +37,12 @@ func main() {
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)))
+		micro.WrapHandler(wapper.NewAuthWapper(a)),
+		micro.WrapSubscriber(wapper.LogSubWapper()))
+
+	walletV1.RegisterWalletServiceHandler(
+		service.Server(),
+		&handler.WalletService{Service: service})
 
 	micro.RegisterSubscriber(
 		viper.GetString("topic.user.created"),
@@ -48,7 +54,7 @@ func main() {
 		service.Server(),
 		&subscriber.OrderCreated{Service: service})
 
-	go models.WalletWatcher(mongo.Get())
+	//go models.WalletWatcher(mongo.Get())
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

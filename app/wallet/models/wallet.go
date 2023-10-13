@@ -16,8 +16,8 @@ var (
 )
 
 type Wallet struct {
-	UserId string  `bson:"user_id,omitempty"`
-	Amount float64 `bson:"amount,omitempty"`
+	UserId string  `json:"user_id" bson:"user_id,omitempty"`
+	Amount float64 `json:"amount" bson:"amount,omitempty"`
 }
 
 func (d *Wallet) DatabaseName() string {

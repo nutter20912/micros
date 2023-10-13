@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"log"
 	mongodb "micros/database/mongo"
 	orderV1 "micros/proto/order/v1"
 	"time"
@@ -36,7 +37,14 @@ func (d *DepositOrderEvent) CollectionName() string {
 func (d *DepositOrderEvent) Create(userId string, amount float64) (event *DepositOrderEvent, err error) {
 	orderId := ulid.Make().String()
 
-	if event, err = d.Add(orderId, userId, amount, orderV1.DepositStatus_DEPOSIT_STATUS_PROCESSING); err != nil {
+	event = &DepositOrderEvent{
+		OrderId: orderId,
+		UserId:  userId,
+		Status:  orderV1.DepositStatus_DEPOSIT_STATUS_PROCESSING,
+		Amount:  amount,
+	}
+
+	if event, err = d.Add(event); err != nil {
 		return nil, err
 	}
 
@@ -44,26 +52,20 @@ func (d *DepositOrderEvent) Create(userId string, amount float64) (event *Deposi
 }
 
 func (d *DepositOrderEvent) Add(
-	orderId string,
-	userId string,
-	amount float64,
-	status orderV1.DepositStatus,
+	event *DepositOrderEvent,
 ) (*DepositOrderEvent, error) {
 	coll := mongodb.Get().Database(d.DatabaseName()).Collection(d.CollectionName())
 
 	id := primitive.NewObjectID()
-
-	event := &DepositOrderEvent{
-		Id:      id,
-		OrderId: orderId,
-		UserId:  userId,
-		Status:  status,
-		Amount:  amount,
-		Time:    id.Timestamp(),
-	}
+	event.Id = id
+	event.Time = id.Timestamp()
 
 	if _, err := coll.InsertOne(context.Background(), event); err != nil {
 		return nil, err
+	}
+
+	if err := new(DepositOrder).Update(context.Background(), coll, event.OrderId); err != nil {
+		log.Printf("[deposit order err]: %v", err.Error())
 	}
 
 	return event, nil

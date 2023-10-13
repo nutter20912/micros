@@ -43,7 +43,7 @@ func (d *DepositOrder) Get(orderId string) (*DepositOrder, error) {
 	return order, nil
 }
 
-func (d *DepositOrder) Update(ctx context.Context, eventColl *mongo.Collection, orderId string) error {
+func (d *DepositOrder) getAggregatePipeline(orderId string) mongo.Pipeline {
 	sortStage := bson.D{{Key: "$sort", Value: bson.D{
 		{Key: "time", Value: 1},
 	}}}
@@ -59,6 +59,7 @@ func (d *DepositOrder) Update(ctx context.Context, eventColl *mongo.Collection, 
 		{Key: "created_at", Value: bson.D{{Key: "$first", Value: "$time"}}},
 		{Key: "updated_at", Value: bson.D{{Key: "$last", Value: "$time"}}},
 		{Key: "status", Value: bson.D{{Key: "$last", Value: "$status"}}},
+		{Key: "memo", Value: bson.D{{Key: "$last", Value: "$memo"}}},
 	}}}
 
 	projectStage := bson.D{{Key: "$project", Value: bson.D{
@@ -68,14 +69,21 @@ func (d *DepositOrder) Update(ctx context.Context, eventColl *mongo.Collection, 
 		{Key: "created_at", Value: 1},
 		{Key: "updated_at", Value: 1},
 		{Key: "status", Value: 1},
+		{Key: "memo", Value: 1},
 	}}}
 
+	return mongo.Pipeline{sortStage, matchStage, groupStage, projectStage}
+}
+
+func (d *DepositOrder) Update(ctx context.Context, eventColl *mongo.Collection, orderId string) error {
 	mergeStage := bson.D{{Key: "$merge", Value: bson.D{
 		{Key: "into", Value: d.CollectionName()},
 		{Key: "whenMatched", Value: "replace"},
 	}}}
 
-	cursor, err := eventColl.Aggregate(ctx, mongo.Pipeline{sortStage, matchStage, groupStage, projectStage, mergeStage})
+	pipeline := d.getAggregatePipeline(orderId)
+
+	cursor, err := eventColl.Aggregate(ctx, append(pipeline, mergeStage))
 	if err != nil {
 		return err
 	}

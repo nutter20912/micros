@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"micros/app/order/handler"
-	"micros/app/order/models"
 	"micros/app/order/subscriber"
 	"micros/auth"
 	"micros/config"
@@ -39,19 +38,18 @@ func main() {
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),
 		micro.WrapHandler(wapper.NewAuthWapper(a)),
-	)
+		micro.WrapSubscriber(wapper.LogSubWapper()))
 
 	orderV1.RegisterOrderServiceHandler(
 		service.Server(),
-		&handler.OrderService{Service: service},
-	)
+		&handler.OrderService{Service: service})
 
 	micro.RegisterSubscriber(
 		viper.GetString("topic.wallet.transaction"),
 		service.Server(),
 		&subscriber.AddOrderEvent{})
 
-	go models.OrderWatcher(mongo.Get())
+	//go models.OrderWatcher(mongo.Get())
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)
