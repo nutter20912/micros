@@ -36,13 +36,11 @@ func main() {
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)),
-	)
+		micro.WrapHandler(wapper.NewAuthWapper(a)))
 
 	userV1.RegisterUserServiceHandler(
 		service.Server(),
-		&handler.UserService{Service: service},
-	)
+		handler.NewUserService(service, mysql.Get()))
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

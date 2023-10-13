@@ -9,7 +9,6 @@ import (
 	"micros/app/user/models"
 	"micros/auth"
 	"micros/auth/hash"
-	"micros/database/mysql"
 	userV1 "micros/proto/user/v1"
 
 	"go-micro.dev/v4"
@@ -19,8 +18,13 @@ import (
 	"gorm.io/gorm"
 )
 
+func NewUserService(service micro.Service, db *gorm.DB) *UserService {
+	return &UserService{service: service, db: db}
+}
+
 type UserService struct {
-	Service micro.Service
+	service micro.Service
+	db      *gorm.DB
 }
 
 func (g *UserService) Register(
@@ -32,10 +36,9 @@ func (g *UserService) Register(
 		return microErrors.BadRequest("222", err.Error())
 	}
 
-	db := mysql.Get()
 	user := &models.User{Email: req.Email}
 
-	if result := db.Where(user).First(user); result.RowsAffected > 0 {
+	if result := g.db.Where(user).First(user); result.RowsAffected > 0 {
 		return microErrors.BadRequest("123", "user existed")
 	}
 
@@ -43,11 +46,11 @@ func (g *UserService) Register(
 	user.Password = hashed
 	user.Name = req.Name
 
-	if result := db.Create(user); result.Error != nil {
+	if result := g.db.Create(user); result.Error != nil {
 		return microErrors.InternalServerError("123", result.Error.Error())
 	}
 
-	event.UserCreated{Client: g.Service.Client()}.Dispatch(fmt.Sprint(user.ID))
+	event.UserCreated{Client: g.service.Client()}.Dispatch(fmt.Sprint(user.ID))
 
 	rsp.Result = &userV1.Result{Code: 200, Message: "success"}
 
@@ -63,10 +66,8 @@ func (g *UserService) Login(
 		return microErrors.BadRequest("222", err.Error())
 	}
 
-	db := mysql.Get()
-
 	var user models.User
-	if result := db.Where(&models.User{Email: req.Email}).First(&user); errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	if result := g.db.Where(&models.User{Email: req.Email}).First(&user); errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return microErrors.NotFound("123", "user not found")
 	}
 
@@ -102,10 +103,8 @@ func (g *UserService) Get(
 ) (err error) {
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	db := mysql.Get()
-
 	var user models.User
-	if result := db.First(&user, userId); errors.Is(result.Error, gorm.ErrRecordNotFound) {
+	if result := g.db.First(&user, userId); errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return microErrors.NotFound("123", "user not found")
 	}
 
@@ -129,10 +128,8 @@ func (g *UserService) GetList(
 		return microErrors.BadRequest("222", err.Error())
 	}
 
-	db := mysql.Get()
-
 	var users []*userV1.User
-	if result := db.Table("users").Where("id IN ?", req.UserId).Scan(&users); result.Error != nil {
+	if result := g.db.Table("users").Where("id IN ?", req.UserId).Scan(&users); result.Error != nil {
 		return microErrors.NotFound("123", result.Error.Error())
 	}
 
