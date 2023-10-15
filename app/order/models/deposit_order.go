@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	orderV1 "micros/proto/order/v1"
+	"time"
 
 	mongodb "micros/database/mongo"
 
@@ -17,11 +18,13 @@ var (
 )
 
 type DepositOrder struct {
-	Id     string                `json:"id" bson:"id,omitempty"`
-	UserId string                `json:"user_id" bson:"user_id,omitempty"`
-	Status orderV1.DepositStatus `json:"status" bson:"status,omitempty"`
-	Amount float64               `json:"amount" bson:"amount,omitempty"`
-	Memo   string                `json:"memo" bson:"memo,omitempty"`
+	Id        string                `json:"id" bson:"id,omitempty"`
+	UserId    string                `json:"user_id" bson:"user_id,omitempty"`
+	Status    orderV1.DepositStatus `json:"status" bson:"status,omitempty"`
+	Amount    float64               `json:"amount" bson:"amount,omitempty"`
+	Memo      string                `json:"memo" bson:"memo,omitempty"`
+	CreatedAt time.Time             `json:"created_at" bson:"created_at,omitempty"`
+	UpdatedAt time.Time             `json:"updated_at" bson:"updated_at,omitempty"`
 }
 
 func (d *DepositOrder) DatabaseName() string {

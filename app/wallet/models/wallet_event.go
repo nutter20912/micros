@@ -19,7 +19,7 @@ type WalletEvent struct {
 	Id      primitive.ObjectID       `json:"id" bson:"_id,omitempty"`
 	UserId  string                   `json:"user_id" bson:"user_id,omitempty"`
 	OrderId string                   `json:"order_id" bson:"order_id,omitempty"`
-	Time    string                   `json:"time" bson:"time,omitempty"`
+	Time    time.Time                `json:"time" bson:"time,omitempty"`
 	Type    walletV1.WalletEventType `json:"type" bson:"type,omitempty"`
 	Change  float64                  `json:"change" bson:"change,omitempty"`
 	Memo    string                   `json:"memo" bson:"memo,omitempty"`
@@ -38,7 +38,7 @@ func (w *WalletEvent) Add(walletEvent *walletV1.WalletEvent) error {
 
 	wallet := WalletEvent{
 		Id:      primitive.NewObjectID(),
-		Time:    time.Now().Format(time.RFC3339),
+		Time:    time.Now(),
 		Type:    walletEvent.Type,
 		UserId:  walletEvent.UserId,
 		OrderId: walletEvent.OrderId,

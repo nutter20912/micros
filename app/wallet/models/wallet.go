@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"time"
 
 	mongodb "micros/database/mongo"
 
@@ -16,8 +17,10 @@ var (
 )
 
 type Wallet struct {
-	UserId string  `json:"user_id" bson:"user_id,omitempty"`
-	Amount float64 `json:"amount" bson:"amount,omitempty"`
+	UserId    string    `json:"user_id" bson:"user_id,omitempty"`
+	Amount    float64   `json:"amount" bson:"amount,omitempty"`
+	CreatedAt time.Time `json:"created_at" bson:"created_at,omitempty"`
+	UpdatedAt time.Time `json:"updated_at" bson:"updated_at,omitempty"`
 }
 
 func (d *Wallet) DatabaseName() string {
