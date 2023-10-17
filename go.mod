@@ -4,6 +4,7 @@ go 1.20
 
 require (
 	ariga.io/atlas-provider-gorm v0.1.0
+	dario.cat/mergo v1.0.0
 	github.com/envoyproxy/protoc-gen-validate v0.10.1
 	github.com/go-micro/plugins/v4/auth/jwt v1.2.0
 	github.com/go-micro/plugins/v4/broker/nats v1.2.0
@@ -12,6 +13,8 @@ require (
 	github.com/go-micro/plugins/v4/server/grpc v1.2.0
 	github.com/golang-migrate/migrate/v4 v4.15.1
 	github.com/joho/godotenv v1.5.1
+	github.com/nats-io/nats.go v1.30.2
+	github.com/oklog/ulid/v2 v2.1.0
 	github.com/spf13/viper v1.7.1
 	go-micro.dev/v4 v4.9.0
 	go.mongodb.org/mongo-driver v1.7.0
@@ -70,17 +73,14 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.19 // indirect
 	github.com/miekg/dns v1.1.50 // indirect
-	github.com/minio/highwayhash v1.0.2 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/hashstructure v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/nats-io/jwt/v2 v2.5.2 // indirect
-	github.com/nats-io/nats.go v1.30.2 // indirect
+	github.com/nats-io/nats-server/v2 v2.7.4 // indirect
 	github.com/nats-io/nkeys v0.4.5 // indirect
 	github.com/nats-io/nuid v1.0.1 // indirect
 	github.com/nxadm/tail v1.4.8 // indirect
-	github.com/oklog/ulid v1.3.1 // indirect
-	github.com/oklog/ulid/v2 v2.1.0 // indirect
 	github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml v1.8.1 // indirect
@@ -106,6 +106,7 @@ require (
 	golang.org/x/sync v0.3.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/time v0.0.0-20220210224613-90d013bbcef8 // indirect
 	golang.org/x/tools v0.12.0 // indirect
 	google.golang.org/genproto v0.0.0-20221118155620-16455021b5e6 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect

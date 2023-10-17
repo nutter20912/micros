@@ -5,12 +5,12 @@ import (
 	"log"
 	"micros/app/user/handler"
 	"micros/auth"
+	_ "micros/broker/natsjs"
 	"micros/config"
 	"micros/database/mysql"
 	userV1 "micros/proto/user/v1"
 	"micros/wapper"
 
-	_ "github.com/go-micro/plugins/v4/broker/nats"
 	_ "github.com/go-micro/plugins/v4/registry/consul"
 	"github.com/spf13/viper"
 

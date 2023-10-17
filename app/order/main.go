@@ -6,13 +6,14 @@ import (
 	"micros/app/order/handler"
 	"micros/app/order/subscriber"
 	"micros/auth"
+	"micros/broker/natsjs"
 	"micros/config"
 	"micros/database/mongo"
 	orderV1 "micros/proto/order/v1"
 	"micros/wapper"
 
-	_ "github.com/go-micro/plugins/v4/broker/nats"
 	_ "github.com/go-micro/plugins/v4/registry/consul"
+	"github.com/nats-io/nats.go/jetstream"
 	"github.com/spf13/viper"
 
 	sgrpc "github.com/go-micro/plugins/v4/server/grpc"
@@ -45,11 +46,13 @@ func main() {
 		&handler.OrderService{Service: service})
 
 	micro.RegisterSubscriber(
-		viper.GetString("topic.wallet.transaction"),
+		"wallet.*",
 		service.Server(),
-		&subscriber.AddOrderEvent{})
-
-	//go models.OrderWatcher(mongo.Get())
+		&subscriber.AddOrderEvent{},
+		natsjs.StreamConfig(jetstream.StreamConfig{
+			Name:      "wallet",
+			Retention: jetstream.WorkQueuePolicy,
+		}))
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)
