@@ -8,9 +8,9 @@ import (
 	walletV1 "micros/proto/wallet/v1"
 )
 
-type AddOrderEvent struct{}
+type WalletSubscriber struct{}
 
-func (e *AddOrderEvent) Handle(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
+func (s *WalletSubscriber) TransactionEvent(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
 	depositOrder, err := new(models.DepositOrder).Get(msg.OrderId)
 	if err != nil {
 		return errors.New("deposit_order not found")

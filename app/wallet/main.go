@@ -49,7 +49,7 @@ func main() {
 	micro.RegisterSubscriber(
 		"user.*",
 		service.Server(),
-		&subscriber.UserRegisterd{Service: service},
+		&subscriber.UserSubscriber{Service: service},
 		natsjs.StreamConfig(jetstream.StreamConfig{
 			Name:      "user",
 			Retention: jetstream.WorkQueuePolicy,
@@ -58,7 +58,7 @@ func main() {
 	micro.RegisterSubscriber(
 		"order.*",
 		service.Server(),
-		&subscriber.OrderCreated{Service: service},
+		&subscriber.OrderSubscriber{Service: service},
 		natsjs.StreamConfig(jetstream.StreamConfig{
 			Name:      "order",
 			Retention: jetstream.WorkQueuePolicy,

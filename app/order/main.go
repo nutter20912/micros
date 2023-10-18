@@ -48,7 +48,7 @@ func main() {
 	micro.RegisterSubscriber(
 		"wallet.*",
 		service.Server(),
-		&subscriber.AddOrderEvent{},
+		&subscriber.WalletSubscriber{},
 		natsjs.StreamConfig(jetstream.StreamConfig{
 			Name:      "wallet",
 			Retention: jetstream.WorkQueuePolicy,

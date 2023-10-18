@@ -6,36 +6,16 @@ import (
 	"micros/app/wallet/event"
 	"micros/app/wallet/models"
 	orderV1 "micros/proto/order/v1"
-	userV1 "micros/proto/user/v1"
 	walletV1 "micros/proto/wallet/v1"
 
 	"go-micro.dev/v4"
 )
 
-type UserRegisterd struct {
+type OrderSubscriber struct {
 	Service micro.Service
 }
 
-func (s *UserRegisterd) Handle(ctx context.Context, event *userV1.RegisteredEventMessage) error {
-	walletEvent := walletV1.WalletEvent{
-		Type:   walletV1.WalletEventType_WALLET_EVENT_TYPE_SYSTEM,
-		UserId: event.UserId,
-		Change: 0,
-		Memo:   "init",
-	}
-
-	if err := new(models.WalletEvent).Add(&walletEvent); err != nil {
-		return errors.New("add wallet_event error")
-	}
-
-	return nil
-}
-
-type OrderCreated struct {
-	Service micro.Service
-}
-
-func (o *OrderCreated) DepositHandle(ctx context.Context, e *orderV1.DepositOrderEvent) error {
+func (o *OrderSubscriber) DepositCreated(ctx context.Context, e *orderV1.DepositOrderEvent) error {
 	msg := &walletV1.TransactionEventMessage{
 		UserId:  e.UserId,
 		OrderId: e.OrderId,
