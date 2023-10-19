@@ -57,20 +57,20 @@ func (w *WalletEvent) Add(walletEvent *walletV1.WalletEvent) error {
 	return nil
 }
 
-func (w *WalletEvent) Get(userId string) ([]*WalletEvent, error) {
+func (w *WalletEvent) Get(userId string, page *int64, limit *int64) ([]*WalletEvent, *mongodb.Paginatior, error) {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
 	var events []*WalletEvent
-	cur, err := coll.Find(context.Background(), bson.M{"user_id": userId})
+
+	paginatior, err := mongodb.NewPagination(coll).
+		Where(bson.M{"user_id": userId}).
+		Desc("_id").
+		Page(page).
+		Limit(limit).
+		Find(context.Background(), &events)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	if err = cur.All(context.Background(), &events); err != nil {
-		return nil, err
-	}
-
-	bson.MarshalExtJSON(events, false, false)
-
-	return events, nil
+	return events, paginatior, nil
 }
