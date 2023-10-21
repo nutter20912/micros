@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"micros/app/wallet/models"
 	walletV1 "micros/proto/wallet/v1"
@@ -10,6 +11,9 @@ import (
 	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
+
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
@@ -64,6 +68,53 @@ func (s *WalletService) Get(
 	json.Unmarshal(bytes, &data)
 
 	rsp.Data = data
+
+	return nil
+}
+
+func (s *WalletService) GetWalletStream(
+	ctx context.Context,
+	req *walletV1.GetWalletStreamResquest,
+	stream walletV1.WalletService_GetWalletStreamStream,
+) error {
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	eventCursor := req.EventCursor
+
+	for {
+		time.Sleep(time.Second)
+
+		wallet, err := new(models.Wallet).Get(userId)
+		if err != nil {
+			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
+			break
+		}
+		var info *walletV1.Wallet
+		infoBytes, _ := json.Marshal(wallet)
+		json.Unmarshal(infoBytes, &info)
+
+		walletEvents, err := new(models.WalletEvent).GetEvents(userId, eventCursor)
+		if err != nil {
+			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
+			break
+		}
+
+		if len(walletEvents) != 0 {
+			lastId := walletEvents[0].Id.Hex()
+			eventCursor = &lastId
+		}
+
+		var events []*walletV1.WalletEvent
+		walletEventsBytes, _ := json.Marshal(walletEvents)
+		json.Unmarshal(walletEventsBytes, &events)
+
+		if err := stream.Send(&walletV1.GetWalletStreamResponse{Info: info, Events: events}); err != nil {
+			stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			break
+		}
+	}
+
+	stream.Context().Done()
 
 	return nil
 }

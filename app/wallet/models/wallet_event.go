@@ -9,6 +9,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var (
@@ -73,4 +74,35 @@ func (w *WalletEvent) Get(userId string, page *int64, limit *int64) ([]*WalletEv
 	}
 
 	return events, paginatior, nil
+}
+
+func (w *WalletEvent) GetEvents(userId string, eventCursor *string) ([]*WalletEvent, error) {
+	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
+
+	var events []*WalletEvent
+
+	filter := bson.M{"user_id": userId}
+	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}})
+
+	if eventCursor != nil {
+		objID, err := primitive.ObjectIDFromHex(*eventCursor)
+		if err != nil {
+			return nil, err
+		}
+
+		filter["_id"] = bson.M{"$gt": objID}
+	} else {
+		opts.SetLimit(1)
+	}
+
+	cur, err := coll.Find(context.Background(), filter, opts)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := cur.All(context.Background(), &events); err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }
