@@ -24,6 +24,8 @@ type DepositOrderEvent struct {
 	Amount  float64               `json:"amount" bson:"amount,omitempty"`
 	Memo    string                `json:"memo" bson:"memo,omitempty"`
 	Time    time.Time             `json:"time" bson:"time,omitempty"`
+
+	MsgId string `json:"msg_id" bson:"msg_id,omitempty"`
 }
 
 func (d *DepositOrderEvent) DatabaseName() string {
@@ -87,4 +89,19 @@ func (d *DepositOrderEvent) Get(orderId string) ([]*DepositOrderEvent, error) {
 	bson.MarshalExtJSON(events, false, false)
 
 	return events, nil
+}
+
+func (d *DepositOrderEvent) Exist(microId string) (bool, error) {
+	coll := mongodb.Get().Database(d.DatabaseName()).Collection(d.CollectionName())
+
+	count, err := coll.CountDocuments(context.Background(), bson.M{"msg_id": microId})
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

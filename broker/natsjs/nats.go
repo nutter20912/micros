@@ -4,7 +4,6 @@ package natsjs
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 	"sync"
 
@@ -198,9 +197,22 @@ func (n *natsBroker) Publish(topic string, msg *broker.Message, opts ...broker.P
 		return err
 	}
 
-	_, err = n.js.Publish(context.Background(), topic, b)
+	clientOpt := &broker.PublishOptions{}
 
-	fmt.Println(topic)
+	for _, o := range opts {
+		o(clientOpt)
+	}
+
+	pubOpts := []jetstream.PublishOpt{
+		jetstream.WithMsgID(msg.Header["Micro-Id"]),
+	}
+
+	if val, ok := clientOpt.Context.Value(publishOptionsKey{}).([]jetstream.PublishOpt); ok {
+		pubOpts = append(pubOpts, val...)
+	}
+
+	_, err = n.js.Publish(context.Background(), topic, b, pubOpts...)
+
 	return err
 }
 
@@ -212,9 +224,9 @@ func (n *natsBroker) stream(topic string, opt broker.SubscribeOptions) (jetstrea
 		mergo.Merge(&jsCfg, val)
 	}
 
-	if _, err := n.js.CreateStream(context.Background(), jsCfg); err != nil && !errors.Is(jetstream.ErrStreamNameAlreadyInUse, err) {
-		return nil, err
-	}
+	//if _, err := n.js.CreateStream(context.Background(), jsCfg); err != nil && !errors.Is(jetstream.ErrStreamNameAlreadyInUse, err) {
+	//	return nil, err
+	//}
 
 	s, err := n.js.Stream(context.Background(), name)
 	if err != nil {

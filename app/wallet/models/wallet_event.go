@@ -24,6 +24,8 @@ type WalletEvent struct {
 	Type    walletV1.WalletEventType `json:"type" bson:"type,omitempty"`
 	Change  float64                  `json:"change" bson:"change,omitempty"`
 	Memo    string                   `json:"memo" bson:"memo,omitempty"`
+
+	MsgId string `json:"msg_id" bson:"msg_id,omitempty"`
 }
 
 func (d *WalletEvent) DatabaseName() string {
@@ -34,24 +36,17 @@ func (w *WalletEvent) CollectionName() string {
 	return walletEventCollectionName
 }
 
-func (w *WalletEvent) Add(walletEvent *walletV1.WalletEvent) error {
+func (w *WalletEvent) Add(we *WalletEvent) error {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
-	wallet := WalletEvent{
-		Id:      primitive.NewObjectID(),
-		Time:    time.Now(),
-		Type:    walletEvent.Type,
-		UserId:  walletEvent.UserId,
-		OrderId: walletEvent.OrderId,
-		Change:  walletEvent.Change,
-		Memo:    walletEvent.Memo,
-	}
+	we.Id = primitive.NewObjectID()
+	we.Time = time.Now()
 
-	if _, err := coll.InsertOne(context.Background(), wallet); err != nil {
+	if _, err := coll.InsertOne(context.Background(), we); err != nil {
 		return err
 	}
 
-	if err := new(Wallet).Update(context.Background(), coll, wallet.UserId); err != nil {
+	if err := new(Wallet).Update(context.Background(), coll, we.UserId); err != nil {
 		log.Printf("[wallet err]: %v", err.Error())
 	}
 
@@ -105,4 +100,19 @@ func (w *WalletEvent) GetEvents(userId string, eventCursor *string) ([]*WalletEv
 	}
 
 	return events, nil
+}
+
+func (w *WalletEvent) Exist(msgId string) (bool, error) {
+	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
+
+	count, err := coll.CountDocuments(context.Background(), bson.M{"msg_id": msgId})
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

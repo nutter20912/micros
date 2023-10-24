@@ -5,7 +5,9 @@ import (
 	"encoding/base64"
 	"fmt"
 	"log"
+	_ "micros/broker/natsjs"
 	userV1 "micros/proto/user/v1"
+	walletV1 "micros/proto/wallet/v1"
 	"os"
 	"time"
 
@@ -20,7 +22,7 @@ import (
 
 func main() {
 	start := time.Now()
-	call()
+	callStream()
 	log.Printf("Binomial took %s", time.Since(start))
 }
 
@@ -80,4 +82,32 @@ func call() {
 		fmt.Println(err.Error())
 	}
 	fmt.Println(rsp)
+}
+
+func callStream() {
+	re := consul.NewRegistry(registry.Addrs(":8500"))
+
+	service := micro.NewService(
+		micro.Name("Cmd.Client"),
+		micro.Registry(re),
+	)
+	service.Init()
+
+	srv := walletV1.NewWalletService("srv.wallet", grpc.NewClient())
+	stream, err := srv.GetWalletStream(context.Background(), &walletV1.GetWalletStreamResquest{})
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for {
+		rsp, err := stream.Recv()
+		if err != nil {
+			log.Fatalln(err)
+			return
+		}
+
+		// valStr := fmt.Sprintf("Response\n Val: %s", rsp.Info)
+		log.Println(rsp.Events)
+
+	}
 }

@@ -3,11 +3,12 @@ package event
 import (
 	"context"
 	"fmt"
+	"micros/event"
 	orderV1 "micros/proto/order/v1"
 
-	"github.com/spf13/viper"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/client"
+	"go-micro.dev/v4/metadata"
 )
 
 type OrderCreated struct {
@@ -15,15 +16,24 @@ type OrderCreated struct {
 }
 
 func (o OrderCreated) Topic() string {
-	return viper.GetString("topic.order.created")
+	return "order.deposit.created"
 }
 
-func (o OrderCreated) Dispatch(depositOrderEvent *orderV1.DepositOrderEvent) {
+func (o OrderCreated) Dispatch(depositOrderEvent *orderV1.DepositOrderEvent, opts ...event.DispatchOption) error {
 	pub := micro.NewEvent(o.Topic(), o.Client)
 
 	msg := depositOrderEvent
 
-	if err := pub.Publish(context.Background(), msg); err != nil {
-		fmt.Printf("error publishing: %v", err)
+	mdOpts := map[string]string{}
+	for _, o := range opts {
+		o(mdOpts)
 	}
+
+	ctx := metadata.NewContext(context.Background(), mdOpts)
+
+	if err := pub.Publish(ctx, msg); err != nil {
+		return fmt.Errorf("publish error: %v", err)
+	}
+
+	return nil
 }

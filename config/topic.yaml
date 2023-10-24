@@ -1,7 +1,14 @@
 topic:
   user:
     created: user.created
+
   order:
-    created: order.created
+    withdraw:
+      created: order.withdraw.created
+    deposit:
+      created: order.deposit.created
+    #spot:
+    #  created: order.spot.created
+
   wallet:
     transaction: wallet.transaction

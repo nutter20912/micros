@@ -3,7 +3,6 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"micros/app/order/event"
 	"micros/app/order/models"
@@ -31,19 +30,21 @@ func (s *OrderService) CreateDepositEvent(
 
 	depositOrderEvent, err := new(models.DepositOrderEvent).Create(userId, req.GetAmount())
 	if err != nil {
-		fmt.Println(err)
 		return microErrors.BadRequest("123", "create fail")
 	}
 
 	rsp.Data = &orderV1.DepositOrderEvent{
-		Id:      depositOrderEvent.Id.String(),
+		Id:      depositOrderEvent.Id.Hex(),
 		OrderId: depositOrderEvent.OrderId,
 		UserId:  depositOrderEvent.UserId,
 		Status:  depositOrderEvent.Status,
 		Amount:  depositOrderEvent.Amount,
 	}
 
-	event.OrderCreated{Client: s.Service.Client()}.Dispatch(rsp.Data)
+	err = event.OrderCreated{Client: s.Service.Client()}.Dispatch(rsp.Data)
+	if err != nil {
+		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
+	}
 
 	return nil
 }

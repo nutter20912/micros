@@ -2,9 +2,9 @@ package subscriber
 
 import (
 	"context"
-	"errors"
 	"micros/app/wallet/event"
 	"micros/app/wallet/models"
+	baseEvent "micros/event"
 	orderV1 "micros/proto/order/v1"
 	walletV1 "micros/proto/wallet/v1"
 
@@ -16,37 +16,45 @@ type OrderSubscriber struct {
 }
 
 func (o *OrderSubscriber) DepositCreated(ctx context.Context, e *orderV1.DepositOrderEvent) error {
-	msg := &walletV1.TransactionEventMessage{
-		UserId:  e.UserId,
-		OrderId: e.OrderId,
-		Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT,
-		Success: true}
+	microId, err := baseEvent.MicroId(ctx)
+	if err != nil {
+		return err
+	}
 
-	err := func() error {
-		_, err := new(models.Wallet).Get(e.UserId)
-		if err != nil {
-			return errors.New("wallet not found")
+	if err := validate(ctx, microId); err != nil {
+		return baseEvent.ErrReportOrIgnore(err)
+	}
+
+	getMessage := func(e *orderV1.DepositOrderEvent) *walletV1.TransactionEventMessage {
+		msg := &walletV1.TransactionEventMessage{
+			UserId:  e.UserId,
+			OrderId: e.OrderId,
+			Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT,
+			Success: true}
+
+		if _, err := new(models.Wallet).Get(e.UserId); err != nil {
+			msg.Memo = "wallet not found"
+			msg.Success = false
+			return msg
 		}
 
-		newWalletEvent := &walletV1.WalletEvent{
+		newWalletEvent := &models.WalletEvent{
+			MsgId:   microId,
 			UserId:  e.UserId,
 			OrderId: e.OrderId,
 			Change:  e.Amount,
 			Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT}
 
 		if err := new(models.WalletEvent).Add(newWalletEvent); err != nil {
-			return errors.New("add wallet_event error")
+			msg.Memo = "add wallet_event error"
+			msg.Success = false
+			return msg
 		}
 
-		return nil
-	}()
-
-	if err != nil {
-		msg.Memo = err.Error()
-		msg.Success = false
+		return msg
 	}
 
-	event.TransactionEvent{Client: o.Service.Client()}.Dispatch(msg)
+	event.TransactionEvent{Client: o.Service.Client()}.Dispatch(getMessage(e))
 
 	return nil
 }

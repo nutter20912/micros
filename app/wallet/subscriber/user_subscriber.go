@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"micros/app/wallet/models"
+	baseEvent "micros/event"
 	userV1 "micros/proto/user/v1"
 	walletV1 "micros/proto/wallet/v1"
 
@@ -15,14 +16,23 @@ type UserSubscriber struct {
 }
 
 func (s *UserSubscriber) Registered(ctx context.Context, event *userV1.RegisteredEventMessage) error {
-	walletEvent := walletV1.WalletEvent{
+	microId, err := baseEvent.MicroId(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := validate(ctx, microId); err != nil {
+		return baseEvent.ErrReportOrIgnore(err)
+	}
+
+	newWalletEvent := &models.WalletEvent{
+		MsgId:  microId,
 		Type:   walletV1.WalletEventType_WALLET_EVENT_TYPE_SYSTEM,
 		UserId: event.UserId,
 		Change: 0,
-		Memo:   "init",
-	}
+		Memo:   "init"}
 
-	if err := new(models.WalletEvent).Add(&walletEvent); err != nil {
+	if err := new(models.WalletEvent).Add(newWalletEvent); err != nil {
 		return errors.New("add wallet_event error")
 	}
 

@@ -14,12 +14,20 @@ import (
 )
 
 func jetStream(ctx context.Context) (jetstream.JetStream, error) {
+	defer fmt.Println("leave jetStream")
 	nc, err := nats.Connect("nats")
 	if err != nil {
 		return nil, err
 	}
 
-	defer nc.Close()
+	go func(ctx context.Context) {
+		defer func() {
+			nc.Close()
+			fmt.Println("leave jetStreamFunc")
+		}()
+
+		<-ctx.Done()
+	}(ctx)
 
 	js, _ := jetstream.New(nc)
 
@@ -27,11 +35,10 @@ func jetStream(ctx context.Context) (jetstream.JetStream, error) {
 }
 
 func stream(ctx context.Context, js jetstream.JetStream) (jetstream.Stream, error) {
-	//js.DeleteStream(ctx, "EVENTS")
 	s, err := js.CreateStream(ctx, jetstream.StreamConfig{
-		Name:      "EVENTS",
-		Retention: jetstream.WorkQueuePolicy,
-		Subjects:  []string{"events.>"},
+		Name:      "market",
+		Subjects:  []string{"market.*"},
+		Retention: jetstream.InterestPolicy,
 	})
 
 	if err != nil {
@@ -47,22 +54,31 @@ func stream(ctx context.Context, js jetstream.JetStream) (jetstream.Stream, erro
 
 func main() {
 	ctx := context.Background()
-	js, _ := jetStream(ctx)
-	s, _ := stream(ctx, js)
+	js, err := jetStream(ctx)
+	if err != nil {
+		log.Fatalf("Connect Error: %v", err)
+	}
+
+	//_, err = stream(ctx, js)
+	s, err := js.Stream(context.Background(), "market")
+	if err != nil {
+		log.Fatalf("Stream Error: %v", err)
+	}
 
 	go pub(ctx, js)
 	go sub(ctx, s)
 
-	time.Sleep(time.Minute)
+	time.Sleep(time.Second * 10)
 }
 
 func pub(ctx context.Context, js jetstream.JetStream) {
-	js.Publish(ctx, "events.us.page_loaded", nil)
+	js.Publish(ctx, "market.aaa", nil)
 }
 
 func sub(ctx context.Context, s jetstream.Stream) {
+	defer fmt.Println("leave sub")
 	c, err := s.CreateOrUpdateConsumer(ctx, jetstream.ConsumerConfig{
-		DeliverPolicy: jetstream.DeliverByStartSequencePolicy,
+		FilterSubject: "market.test",
 	})
 
 	if err != nil {
@@ -76,7 +92,7 @@ func sub(ctx context.Context, s jetstream.Stream) {
 
 	defer cc.Stop()
 
-	quit := make(chan os.Signal, 1)
+	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
 }
