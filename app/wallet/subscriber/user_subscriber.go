@@ -22,7 +22,7 @@ func (s *UserSubscriber) Registered(ctx context.Context, event *userV1.Registere
 	}
 
 	if err := validate(ctx, microId); err != nil {
-		return baseEvent.ErrReportOrIgnore(err)
+		return err
 	}
 
 	newWalletEvent := &models.WalletEvent{

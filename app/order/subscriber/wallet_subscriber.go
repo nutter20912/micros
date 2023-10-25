@@ -18,7 +18,7 @@ func (s *WalletSubscriber) TransactionEvent(ctx context.Context, msg *walletV1.T
 	}
 
 	if err := validate(ctx, microId); err != nil {
-		return baseEvent.ErrReportOrIgnore(err)
+		return err
 	}
 
 	depositOrder, err := new(models.DepositOrder).Get(msg.OrderId)
