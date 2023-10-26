@@ -32,6 +32,6 @@ func StreamConfig(cfg jetstream.StreamConfig) server.SubscriberOption {
 	return setSubscriberOption(streamConfigKey{}, cfg)
 }
 
-func ConsumerConfig(cfg jetstream.ConsumerConfig) server.SubscriberOption {
-	return setSubscriberOption(consumerConfigKey{}, cfg)
+func ConsumerConfig(cfg jetstream.ConsumerConfig) broker.SubscribeOption {
+	return setSubscribeOption(consumerConfigKey{}, cfg)
 }

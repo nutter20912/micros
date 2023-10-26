@@ -218,11 +218,11 @@ func (n *natsBroker) Publish(topic string, msg *broker.Message, opts ...broker.P
 
 func (n *natsBroker) stream(topic string, opt broker.SubscribeOptions) (jetstream.Stream, error) {
 	name := strings.Split(topic, ".")[0]
-	jsCfg := jetstream.StreamConfig{Subjects: []string{topic}}
+	//jsCfg := jetstream.StreamConfig{Subjects: []string{topic}}
 
-	if val, ok := opt.Context.Value(streamConfigKey{}).(jetstream.StreamConfig); ok {
-		mergo.Merge(&jsCfg, val)
-	}
+	//if val, ok := opt.Context.Value(streamConfigKey{}).(jetstream.StreamConfig); ok {
+	//	mergo.Merge(&jsCfg, val)
+	//}
 
 	//if _, err := n.js.CreateStream(context.Background(), jsCfg); err != nil && !errors.Is(jetstream.ErrStreamNameAlreadyInUse, err) {
 	//	return nil, err
@@ -235,6 +235,21 @@ func (n *natsBroker) stream(topic string, opt broker.SubscribeOptions) (jetstrea
 
 	return s, nil
 
+}
+
+func (n *natsBroker) consumer(s jetstream.Stream, topic string, opt broker.SubscribeOptions) (jetstream.Consumer, error) {
+	consumerConfig := jetstream.ConsumerConfig{FilterSubject: topic}
+
+	if val, ok := opt.Context.Value(consumerConfigKey{}).(jetstream.ConsumerConfig); ok {
+		mergo.Merge(&consumerConfig, val)
+	}
+
+	c, err := s.CreateOrUpdateConsumer(context.Background(), consumerConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return c, nil
 }
 
 func (n *natsBroker) Subscribe(topic string, handler broker.Handler, opts ...broker.SubscribeOption) (broker.Subscriber, error) {
@@ -290,7 +305,9 @@ func (n *natsBroker) Subscribe(topic string, handler broker.Handler, opts ...bro
 		return nil, err
 	}
 
-	c, err := s.CreateOrUpdateConsumer(context.Background(), jetstream.ConsumerConfig{})
+	n.RLock()
+	c, err := n.consumer(s, topic, opt)
+	n.RUnlock()
 	if err != nil {
 		return nil, err
 	}

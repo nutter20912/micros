@@ -50,10 +50,16 @@ func main() {
 		service.Server(),
 		&subscriber.UserSubscriber{Service: service})
 
+	orderSub := &subscriber.OrderSubscriber{Service: service}
 	micro.RegisterSubscriber(
-		"order.*",
+		"order.deposit.created",
 		service.Server(),
-		&subscriber.OrderSubscriber{Service: service})
+		orderSub.DepositCreated)
+
+	micro.RegisterSubscriber(
+		"order.check",
+		service.Server(),
+		orderSub.OrderCheck)
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

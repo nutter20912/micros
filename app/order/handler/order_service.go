@@ -3,11 +3,17 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"sync"
+	"time"
 
-	"micros/app/order/event"
+	OrderAction "micros/app/order/action"
+	OrderEvent "micros/app/order/event"
 	"micros/app/order/models"
+	"micros/event"
 	orderV1 "micros/proto/order/v1"
 
+	"github.com/oklog/ulid/v2"
 	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
@@ -41,7 +47,7 @@ func (s *OrderService) CreateDepositEvent(
 		Amount:  depositOrderEvent.Amount,
 	}
 
-	err = event.OrderCreated{Client: s.Service.Client()}.Dispatch(rsp.Data)
+	err = OrderEvent.OrderCreated{Client: s.Service.Client()}.Dispatch(rsp.Data)
 	if err != nil {
 		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
 	}
@@ -83,6 +89,43 @@ func (s *OrderService) GetDeposit(
 	json.Unmarshal(bytes, &data)
 
 	rsp.Data = data
+
+	return nil
+}
+
+func (s *OrderService) CreateSpot(
+	ctx context.Context,
+	req *orderV1.CreateSpotRequest,
+	rsp *orderV1.CreateSpotResponse,
+) error {
+	userId, _ := metadata.Get(ctx, "user_id")
+	callbackSubject := fmt.Sprintf("order.callback.%s", ulid.Make().String())
+
+	ttl := time.Second * 5
+
+	result := []*orderV1.CheckCallbackMessage{}
+	var wg sync.WaitGroup
+	wg.Add(1)
+
+	go OrderAction.WaitForCheck(
+		s.Service.Options().Broker, &result, &wg, callbackSubject, ttl)
+
+	msg := orderV1.OrderCheckEventMessage{
+		UserId:          userId,
+		CallbackSubject: callbackSubject}
+	oe := OrderEvent.OrderCheck{Client: s.Service.Client()}
+
+	if err := oe.Dispatch(&msg, event.SetTTL(ttl)); err != nil {
+		return microErrors.InternalServerError("222", err.Error())
+	}
+
+	wg.Wait()
+
+	for _, v := range result {
+		if !v.Success {
+			return microErrors.BadRequest("222", v.Msg)
+		}
+	}
 
 	return nil
 }

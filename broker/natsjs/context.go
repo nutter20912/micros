@@ -35,3 +35,12 @@ func setPublishOptions(k, v interface{}) client.PublishOption {
 		o.Context = context.WithValue(o.Context, k, v)
 	}
 }
+
+func setSubscribeOption(k, v interface{}) broker.SubscribeOption {
+	return func(o *broker.SubscribeOptions) {
+		if o.Context == nil {
+			o.Context = context.Background()
+		}
+		o.Context = context.WithValue(o.Context, k, v)
+	}
+}

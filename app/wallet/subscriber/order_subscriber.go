@@ -22,7 +22,7 @@ func (o *OrderSubscriber) DepositCreated(ctx context.Context, e *orderV1.Deposit
 	}
 
 	if err := validate(ctx, microId); err != nil {
-		return baseEvent.ErrReportOrIgnore(err)
+		return err
 	}
 
 	getMessage := func(e *orderV1.DepositOrderEvent) *walletV1.TransactionEventMessage {
@@ -55,6 +55,34 @@ func (o *OrderSubscriber) DepositCreated(ctx context.Context, e *orderV1.Deposit
 	}
 
 	event.TransactionEvent{Client: o.Service.Client()}.Dispatch(getMessage(e))
+
+	return nil
+}
+
+func (o *OrderSubscriber) OrderCheck(ctx context.Context, e *orderV1.OrderCheckEventMessage) error {
+	msg := orderV1.CheckCallbackMessage{
+		Type: orderV1.CheckCallbackType_CHECK_CALLBACK_TYPE_WALLET,
+	}
+
+	wallet, err := new(models.Wallet).Get(e.UserId)
+	if err != nil {
+		msg.Success = false
+		msg.Msg = err.Error()
+	}
+
+	if wallet.Amount == 0 {
+		msg.Success = false
+		msg.Msg = "balance not enough"
+	} else {
+		msg.Success = true
+		msg.Data = &orderV1.CheckCallbackMessage_Wallet{
+			Wallet: &orderV1.CheckWalletData{
+				Balance: wallet.Amount,
+			},
+		}
+	}
+
+	event.CheckCallbackEvent{Client: o.Service.Client()}.Dispatch(e.CallbackSubject, &msg)
 
 	return nil
 }
