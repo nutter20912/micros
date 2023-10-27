@@ -3,17 +3,11 @@ package handler
 import (
 	"context"
 	"encoding/json"
-	"fmt"
-	"sync"
-	"time"
 
-	OrderAction "micros/app/order/action"
 	OrderEvent "micros/app/order/event"
 	"micros/app/order/models"
-	"micros/event"
 	orderV1 "micros/proto/order/v1"
 
-	"github.com/oklog/ulid/v2"
 	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
@@ -93,39 +87,43 @@ func (s *OrderService) GetDeposit(
 	return nil
 }
 
-func (s *OrderService) CreateSpot(
+func (s *OrderService) CreateSpotEvent(
 	ctx context.Context,
-	req *orderV1.CreateSpotRequest,
-	rsp *orderV1.CreateSpotResponse,
+	req *orderV1.CreateSpotEventRequest,
+	rsp *orderV1.CreateSpotEventResponse,
 ) error {
+	if err := req.Validate(); err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
 	userId, _ := metadata.Get(ctx, "user_id")
-	callbackSubject := fmt.Sprintf("order.callback.%s", ulid.Make().String())
 
-	ttl := time.Second * 5
-
-	result := []*orderV1.CheckCallbackMessage{}
-	var wg sync.WaitGroup
-	wg.Add(1)
-
-	go OrderAction.WaitForCheck(
-		s.Service.Options().Broker, &result, &wg, callbackSubject, ttl)
-
-	msg := orderV1.OrderCheckEventMessage{
-		UserId:          userId,
-		CallbackSubject: callbackSubject}
-	oe := OrderEvent.OrderCheck{Client: s.Service.Client()}
-
-	if err := oe.Dispatch(&msg, event.SetTTL(ttl)); err != nil {
-		return microErrors.InternalServerError("222", err.Error())
+	spotOrderEvent := models.SpotOrderEvent{
+		UserId:   userId,
+		Symbol:   req.Symbol,
+		Quantity: req.Quantity,
+		Side:     req.Side,
+		Type:     req.Type,
+		Status:   orderV1.SpotStatus_SPOT_STATUS_NEW,
 	}
 
-	wg.Wait()
-
-	for _, v := range result {
-		if !v.Success {
-			return microErrors.BadRequest("222", v.Msg)
+	if req.Type == orderV1.OrderType_ORDER_TYPE_LIMIT {
+		if req.Price == nil {
+			return microErrors.BadRequest("222", "LIMIT must required Price")
 		}
+
+		spotOrderEvent.Price = *req.Price
 	}
+
+	if err := spotOrderEvent.Create(); err != nil {
+		return microErrors.BadRequest("123", "create fail")
+	}
+
+	var data *orderV1.SpotOrderEvent
+	bytes, _ := json.Marshal(spotOrderEvent)
+	json.Unmarshal(bytes, &data)
+
+	rsp.Data = data
 
 	return nil
 }

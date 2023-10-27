@@ -59,10 +59,16 @@ func WaitForCheck(
 		default:
 		}
 
-		if len(*res) >= 1 {
+		if len(*res) >= 2 {
 			return
 		}
 
 		time.Sleep(time.Millisecond * 100)
 	}
+
+	//switch v.Data.(type) {
+	//case *orderV1.CheckCallbackMessage_Market:
+	//case *orderV1.CheckCallbackMessage_Wallet:
+	//}
+
 }
