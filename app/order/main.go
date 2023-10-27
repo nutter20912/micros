@@ -44,10 +44,7 @@ func main() {
 		service.Server(),
 		&handler.OrderService{Service: service})
 
-	micro.RegisterSubscriber(
-		"wallet.*",
-		service.Server(),
-		&subscriber.WalletSubscriber{})
+	subscriber.Register(service)
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

@@ -7,11 +7,15 @@ import (
 	baseEvent "micros/event"
 	orderV1 "micros/proto/order/v1"
 	walletV1 "micros/proto/wallet/v1"
+
+	"go-micro.dev/v4"
 )
 
-type WalletSubscriber struct{}
+type walletSubscriber struct {
+	Service micro.Service
+}
 
-func (s *WalletSubscriber) TransactionEvent(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
+func (s *walletSubscriber) transactionEvent(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
 	microId, err := baseEvent.MicroId(ctx)
 	if err != nil {
 		return err

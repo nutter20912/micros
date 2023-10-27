@@ -11,11 +11,11 @@ import (
 	"go-micro.dev/v4"
 )
 
-type UserSubscriber struct {
+type userSubscriber struct {
 	Service micro.Service
 }
 
-func (s *UserSubscriber) Registered(ctx context.Context, event *userV1.RegisteredEventMessage) error {
+func (s *userSubscriber) registered(ctx context.Context, event *userV1.RegisteredEventMessage) error {
 	microId, err := baseEvent.MicroId(ctx)
 	if err != nil {
 		return err
