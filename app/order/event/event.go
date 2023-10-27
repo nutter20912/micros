@@ -15,12 +15,8 @@ type OrderCreated struct {
 	Client client.Client
 }
 
-func (o OrderCreated) Topic() string {
-	return "order.deposit.created"
-}
-
 func (o OrderCreated) Dispatch(d *orderV1.DepositOrderEvent, opts ...event.DispatchOption) error {
-	pub := micro.NewEvent(o.Topic(), o.Client)
+	pub := micro.NewEvent(event.ORDER_DEPOSIT_CREATED, o.Client)
 
 	msg := &orderV1.DepositCreatedEventMessage{
 		UserId:  d.UserId,

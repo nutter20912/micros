@@ -15,7 +15,7 @@ type orderSubscriber struct {
 	Service micro.Service
 }
 
-func (o *orderSubscriber) depositCreated(ctx context.Context, e *orderV1.DepositCreatedEventMessage) error {
+func (o *orderSubscriber) addWalletEvent(ctx context.Context, e *orderV1.DepositCreatedEventMessage) error {
 	microId, err := baseEvent.MicroId(ctx)
 	if err != nil {
 		return err
@@ -56,9 +56,5 @@ func (o *orderSubscriber) depositCreated(ctx context.Context, e *orderV1.Deposit
 
 	event.TransactionEvent{Client: o.Service.Client()}.Dispatch(getMessage(e))
 
-	return nil
-}
-
-func (o *orderSubscriber) spotCreated(ctx context.Context, e *orderV1.SpotCreatedEventMessage) error {
 	return nil
 }

@@ -15,7 +15,7 @@ type userSubscriber struct {
 	Service micro.Service
 }
 
-func (s *userSubscriber) registered(ctx context.Context, event *userV1.RegisteredEventMessage) error {
+func (s *userSubscriber) initWalletEvent(ctx context.Context, event *userV1.RegisteredEventMessage) error {
 	microId, err := baseEvent.MicroId(ctx)
 	if err != nil {
 		return err

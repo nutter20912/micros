@@ -1,16 +1,19 @@
 package subscriber
 
-import "go-micro.dev/v4"
+import (
+	"micros/event"
+
+	"go-micro.dev/v4"
+)
 
 func Register(s micro.Service) {
 	orderSub := &orderSubscriber{Service: s}
 	userSub := &userSubscriber{Service: s}
 
 	r := map[string]interface{}{
-		"order.deposit.created": orderSub.depositCreated,
-		"order.spot.created":    orderSub.spotCreated,
+		event.ORDER_DEPOSIT_CREATED: orderSub.addWalletEvent,
 
-		"user.registered": userSub.registered,
+		event.USER_CREATED: userSub.initWalletEvent,
 	}
 
 	for k, v := range r {

@@ -13,6 +13,15 @@ var (
 	PUB_OPTIONS_TTL = "TTL"
 )
 
+var (
+	ORDER_DEPOSIT_CREATED = "order.deposit.created"
+	ORDER_SPOT_CREATED    = "order.spot.created"
+
+	WALLET_TRANSACTION = "wallet.transaction"
+
+	USER_CREATED = "user.created"
+)
+
 func getMedata(ctx context.Context) (metadata.Metadata, error) {
 	md, ok := metadata.FromContext(ctx)
 	if !ok {

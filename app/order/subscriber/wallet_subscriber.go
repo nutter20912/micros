@@ -15,7 +15,7 @@ type walletSubscriber struct {
 	Service micro.Service
 }
 
-func (s *walletSubscriber) transactionEvent(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
+func (s *walletSubscriber) addDepositOrderEvent(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
 	microId, err := baseEvent.MicroId(ctx)
 	if err != nil {
 		return err

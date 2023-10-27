@@ -3,9 +3,9 @@ package event
 import (
 	"context"
 	"fmt"
+	"micros/event"
 	userV1 "micros/proto/user/v1"
 
-	"github.com/spf13/viper"
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/client"
 )
@@ -14,12 +14,8 @@ type UserCreated struct {
 	Client client.Client
 }
 
-func (u UserCreated) Topic() string {
-	return viper.GetString("topic.user.created")
-}
-
 func (u UserCreated) Dispatch(userId string) {
-	pub := micro.NewEvent(u.Topic(), u.Client)
+	pub := micro.NewEvent(event.USER_CREATED, u.Client)
 
 	msg := &userV1.RegisteredEventMessage{UserId: userId}
 
