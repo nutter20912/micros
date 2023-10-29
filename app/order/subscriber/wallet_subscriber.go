@@ -3,24 +3,44 @@ package subscriber
 import (
 	"context"
 	"errors"
+	"fmt"
 	"micros/app/order/models"
-	baseEvent "micros/event"
 	orderV1 "micros/proto/order/v1"
 	walletV1 "micros/proto/wallet/v1"
+	"micros/queue"
 
 	"go-micro.dev/v4"
+	"go-micro.dev/v4/codec/proto"
 )
 
 type walletSubscriber struct {
 	Service micro.Service
 }
 
-func (s *walletSubscriber) addDepositOrderEvent(ctx context.Context, msg *walletV1.TransactionEventMessage) error {
-	microId, err := baseEvent.MicroId(ctx)
+func (s *walletSubscriber) addOrderEvent(ctx context.Context, m *[]byte) error {
+	microId, err := queue.MicroId(ctx)
 	if err != nil {
 		return err
 	}
 
+	msg := walletV1.TransactionEventMessage{}
+	if err := new(proto.Marshaler).Unmarshal(*m, &msg); err != nil {
+		return err
+	}
+
+	switch msg.Type {
+	case walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT:
+		return s.addDepositOrderEvent(ctx, microId, &msg)
+	default:
+		return fmt.Errorf("wrong trans type")
+	}
+}
+
+func (s *walletSubscriber) addDepositOrderEvent(
+	ctx context.Context,
+	microId string,
+	msg *walletV1.TransactionEventMessage,
+) error {
 	if err := validate(ctx, microId); err != nil {
 		return err
 	}

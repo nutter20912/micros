@@ -2,38 +2,37 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"micros/event"
 	orderV1 "micros/proto/order/v1"
 
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/client"
-	"go-micro.dev/v4/metadata"
 )
 
-type OrderCreated struct {
-	Client client.Client
+type DepositOrderCreated struct {
+	Payload *orderV1.DepositOrderEvent
 }
 
-func (o OrderCreated) Dispatch(d *orderV1.DepositOrderEvent, opts ...event.DispatchOption) error {
-	pub := micro.NewEvent(event.ORDER_DEPOSIT_CREATED, o.Client)
+func (o DepositOrderCreated) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.ORDER_DEPOSIT_CREATED, c)
 
 	msg := &orderV1.DepositCreatedEventMessage{
-		UserId:  d.UserId,
-		OrderId: d.OrderId,
-		Amount:  d.Amount,
+		UserId:  o.Payload.UserId,
+		OrderId: o.Payload.OrderId,
+		Amount:  o.Payload.Amount,
 	}
 
-	mdOpts := map[string]string{}
-	for _, o := range opts {
-		o(mdOpts)
-	}
+	return pub.Publish(ctx, msg)
+}
 
-	ctx := metadata.NewContext(context.Background(), mdOpts)
+type SpotOrderCreated struct {
+	Payload *orderV1.SpotOrderEvent
+}
 
-	if err := pub.Publish(ctx, msg); err != nil {
-		return fmt.Errorf("publish error: %v", err)
-	}
+func (o SpotOrderCreated) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.ORDER_SPOT_CREATED, c)
 
-	return nil
+	msg := &orderV1.SpotCreatedEventMessage{Data: o.Payload}
+
+	return pub.Publish(ctx, msg)
 }

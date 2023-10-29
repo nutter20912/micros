@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"micros/app/wallet/models"
+	"micros/event"
 	walletV1 "micros/proto/wallet/v1"
 
 	"go-micro.dev/v4"
@@ -17,8 +18,14 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 )
 
+func NewWalletService(s micro.Service, e *event.Event) *WalletService {
+	return &WalletService{Service: s, Event: e}
+}
+
 type WalletService struct {
 	Service micro.Service
+
+	Event *event.Event
 }
 
 func (s *WalletService) GetEvent(

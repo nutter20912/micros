@@ -3,9 +3,9 @@ package event
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"time"
 
+	"go-micro.dev/v4/client"
 	"go-micro.dev/v4/metadata"
 )
 
@@ -16,65 +16,42 @@ var (
 var (
 	ORDER_DEPOSIT_CREATED = "order.deposit.created"
 	ORDER_SPOT_CREATED    = "order.spot.created"
+	ORDER_SPOT_UPDATED    = "order.spot.updated"
+
+	MARKET_MATCHED       = "market.spot.matched"
+	MARKET_PRICE_CHANGED = "market.price.changed"
 
 	WALLET_TRANSACTION = "wallet.transaction"
 
 	USER_CREATED = "user.created"
 )
 
-func getMedata(ctx context.Context) (metadata.Metadata, error) {
-	md, ok := metadata.FromContext(ctx)
-	if !ok {
-		return nil, fmt.Errorf("no metadata received")
-	}
-	return md, nil
+func New(c client.Client) *Event {
+	return &Event{client: c}
 }
 
-func MicroId(ctx context.Context) (string, error) {
-	md, err := getMedata(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	val, ok := md["Micro-Id"]
-	if !ok {
-		return "", fmt.Errorf("Micro-Id not found")
-	}
-
-	return val, nil
+type Event struct {
+	client client.Client
 }
 
-func Validate(ctx context.Context) error {
-	md, err := getMedata(ctx)
-	if err != nil {
-		return err
+type Publisher interface {
+	Publish(context.Context, client.Client) error
+}
+
+func (e *Event) Dispatch(ee Publisher, opts ...DispatchOption) error {
+	mdOpts := map[string]string{}
+
+	for _, o := range opts {
+		o(mdOpts)
 	}
 
-	if ttl, ok := md[PUB_OPTIONS_TTL]; ok {
-		val, err := strconv.ParseInt(ttl, 10, 64)
-		if err != nil {
-			return fmt.Errorf("wrong time")
-		}
+	ctx := metadata.NewContext(context.Background(), mdOpts)
 
-		if val < time.Now().Unix() {
-			return ErrMessageExpired
-		}
+	if err := ee.Publish(ctx, e.client); err != nil {
+		return fmt.Errorf("publish error: %v", err)
 	}
 
 	return nil
-}
-
-func ErrReportOrIgnore(err error) error {
-	switch err {
-	case ErrMessageExpired:
-		fmt.Println("ErrMessageExpired")
-		return nil
-	case ErrMessageConflicted:
-		fmt.Println("ErrMessageConflicted")
-		return nil
-	default:
-		return err
-	}
 }
 
 type DispatchOptions map[string]string

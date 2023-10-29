@@ -7,10 +7,10 @@ import (
 )
 
 func Register(s micro.Service) {
-	walletSub := &walletSubscriber{Service: s}
+	orderSub := &orderSubscriber{Service: s}
 
 	r := map[string]interface{}{
-		event.WALLET_TRANSACTION: walletSub.addOrderEvent,
+		event.ORDER_SPOT_CREATED: orderSub.matchOrder,
 	}
 
 	for k, v := range r {

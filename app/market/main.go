@@ -3,15 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
-	"micros/app/order/handler"
-	"micros/app/order/subscriber"
+	"micros/app/market/subscriber"
+	"micros/app/market/tasks"
 	"micros/auth"
-	_ "micros/broker/natsjs"
 	"micros/config"
-	"micros/database/mongo"
-	"micros/event"
-	orderV1 "micros/proto/order/v1"
+	"micros/database/redis"
 	"micros/wapper"
+
+	_ "micros/broker/natsjs"
 
 	_ "github.com/go-micro/plugins/v4/registry/consul"
 	"github.com/spf13/viper"
@@ -22,8 +21,8 @@ import (
 )
 
 func init() {
-	config.Init("order")
-	mongo.Init()
+	config.Init("market")
+	redis.Init()
 }
 
 func main() {
@@ -38,16 +37,11 @@ func main() {
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
 		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)),
-		micro.WrapSubscriber(wapper.LogSubWapper()))
-
-	e := event.New(service.Client())
-
-	orderV1.RegisterOrderServiceHandler(
-		service.Server(),
-		handler.NewOrderService(service, e))
+		micro.WrapHandler(wapper.NewAuthWapper(a)))
 
 	subscriber.Register(service)
+
+	go tasks.ExecuteAll(service)
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

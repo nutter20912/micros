@@ -36,17 +36,17 @@ func (w *WalletEvent) CollectionName() string {
 	return walletEventCollectionName
 }
 
-func (w *WalletEvent) Add(we *WalletEvent) error {
+func (w *WalletEvent) Add() error {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
-	we.Id = primitive.NewObjectID()
-	we.Time = time.Now()
+	w.Id = primitive.NewObjectID()
+	w.Time = time.Now()
 
-	if _, err := coll.InsertOne(context.Background(), we); err != nil {
+	if _, err := coll.InsertOne(context.Background(), w); err != nil {
 		return err
 	}
 
-	if err := new(Wallet).Update(context.Background(), coll, we.UserId); err != nil {
+	if err := new(Wallet).Update(context.Background(), coll, w.UserId); err != nil {
 		log.Printf("[wallet err]: %v", err.Error())
 	}
 

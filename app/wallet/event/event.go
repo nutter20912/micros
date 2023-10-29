@@ -8,16 +8,31 @@ import (
 
 	"go-micro.dev/v4"
 	"go-micro.dev/v4/client"
+	"go-micro.dev/v4/codec/proto"
 )
 
 type TransactionEvent struct {
-	Client client.Client
+	Payload *walletV1.TransactionEventMessage
 }
 
-func (e TransactionEvent) Dispatch(msg *walletV1.TransactionEventMessage) {
-	pub := micro.NewEvent(event.WALLET_TRANSACTION, e.Client)
+func (e TransactionEvent) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.WALLET_TRANSACTION, c)
 
-	if err := pub.Publish(context.Background(), msg); err != nil {
-		fmt.Printf("error publishing: %v", err)
+	marshaler := proto.Marshaler{}
+	b, err := marshaler.Marshal(e.Payload)
+	if err != nil {
+		return fmt.Errorf("error Marshal: %v", err)
 	}
+
+	return pub.Publish(context.Background(), b)
+}
+
+type BalanceChecked struct {
+	Payload *walletV1.BalanceCheckedEventMessage
+}
+
+func (e BalanceChecked) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.WALLET_TRANSACTION, c)
+
+	return pub.Publish(context.Background(), e.Payload)
 }

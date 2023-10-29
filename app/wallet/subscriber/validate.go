@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"micros/app/wallet/models"
-	baseEvent "micros/event"
+	"micros/queue"
 )
 
 func validate(ctx context.Context, microId string) error {
@@ -14,7 +14,7 @@ func validate(ctx context.Context, microId string) error {
 	}
 
 	if isExist {
-		return baseEvent.ErrMessageConflicted
+		return queue.ErrMessageConflicted
 	}
 
 	return nil

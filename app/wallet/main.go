@@ -9,6 +9,7 @@ import (
 	_ "micros/broker/natsjs"
 	"micros/config"
 	"micros/database/mongo"
+	"micros/event"
 
 	walletV1 "micros/proto/wallet/v1"
 	"micros/wapper"
@@ -41,11 +42,13 @@ func main() {
 		micro.WrapHandler(wapper.NewAuthWapper(a)),
 		micro.WrapSubscriber(wapper.LogSubWapper()))
 
+	e := event.New(service.Client())
+
 	walletV1.RegisterWalletServiceHandler(
 		service.Server(),
-		&handler.WalletService{Service: service})
+		handler.NewWalletService(service, e))
 
-	subscriber.Register(service)
+	subscriber.Register(service, e)
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

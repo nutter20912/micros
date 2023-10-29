@@ -6,6 +6,7 @@ import (
 
 	OrderEvent "micros/app/order/event"
 	"micros/app/order/models"
+	"micros/event"
 	orderV1 "micros/proto/order/v1"
 
 	"go-micro.dev/v4"
@@ -15,6 +16,12 @@ import (
 
 type OrderService struct {
 	Service micro.Service
+
+	Event *event.Event
+}
+
+func NewOrderService(s micro.Service, e *event.Event) *OrderService {
+	return &OrderService{Service: s, Event: e}
 }
 
 func (s *OrderService) CreateDepositEvent(
@@ -41,8 +48,7 @@ func (s *OrderService) CreateDepositEvent(
 		Amount:  depositOrderEvent.Amount,
 	}
 
-	err = OrderEvent.OrderCreated{Client: s.Service.Client()}.Dispatch(rsp.Data)
-	if err != nil {
+	if err := s.Event.Dispatch(OrderEvent.DepositOrderCreated{Payload: rsp.Data}); err != nil {
 		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
 	}
 
@@ -124,6 +130,10 @@ func (s *OrderService) CreateSpotEvent(
 	json.Unmarshal(bytes, &data)
 
 	rsp.Data = data
+
+	if err := s.Event.Dispatch(OrderEvent.SpotOrderCreated{Payload: rsp.Data}); err != nil {
+		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
+	}
 
 	return nil
 }
