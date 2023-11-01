@@ -12,7 +12,7 @@ import (
 	"micros/event"
 
 	walletV1 "micros/proto/wallet/v1"
-	"micros/wapper"
+	"micros/wrapper"
 
 	_ "github.com/go-micro/plugins/v4/registry/consul"
 	"github.com/spf13/viper"
@@ -38,9 +38,9 @@ func main() {
 		micro.Server(sgrpc.NewServer(server.Name(appName))),
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
-		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)),
-		micro.WrapSubscriber(wapper.LogSubWapper()))
+		micro.WrapHandler(wrapper.NewRequestWrapper()),
+		micro.WrapHandler(wrapper.NewAuthWrapper(a)),
+		micro.WrapSubscriber(wrapper.LogSubWrapper()))
 
 	e := event.New(service.Client())
 

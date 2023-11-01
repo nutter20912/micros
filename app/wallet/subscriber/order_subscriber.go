@@ -26,7 +26,7 @@ func (o *orderSubscriber) addEventByDeposit(ctx context.Context, e *orderV1.Depo
 		return err
 	}
 
-	if err := validate(ctx, microId); err != nil {
+	if err := queue.CheckMsgId(new(models.WalletEvent), microId); err != nil {
 		return err
 	}
 

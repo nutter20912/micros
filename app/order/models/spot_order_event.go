@@ -8,7 +8,9 @@ import (
 	"time"
 
 	"github.com/oklog/ulid/v2"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type SpotOrderEvent struct {
@@ -62,4 +64,30 @@ func (e *SpotOrderEvent) Add() error {
 	}
 
 	return nil
+}
+
+func (e *SpotOrderEvent) Last() error {
+	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
+
+	opts := options.FindOne().SetSort(bson.M{"time": -1})
+	if err := coll.FindOne(context.Background(), bson.M{"order_id": e.OrderId}, opts).Decode(e); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (e *SpotOrderEvent) Exist(microId string) (bool, error) {
+	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
+
+	count, err := coll.CountDocuments(context.Background(), bson.M{"msg_id": microId})
+	if err != nil {
+		return false, err
+	}
+
+	if count == 0 {
+		return false, nil
+	}
+
+	return true, nil
 }

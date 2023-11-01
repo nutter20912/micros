@@ -8,7 +8,7 @@ import (
 	"micros/auth"
 	"micros/config"
 	"micros/database/redis"
-	"micros/wapper"
+	"micros/wrapper"
 
 	_ "micros/broker/natsjs"
 
@@ -36,8 +36,8 @@ func main() {
 		micro.Server(sgrpc.NewServer(server.Name(appName))),
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
-		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)))
+		micro.WrapHandler(wrapper.NewRequestWrapper()),
+		micro.WrapHandler(wrapper.NewAuthWrapper(a)))
 
 	subscriber.Register(service)
 

@@ -9,7 +9,7 @@ import (
 	"micros/config"
 	"micros/database/mysql"
 	userV1 "micros/proto/user/v1"
-	"micros/wapper"
+	"micros/wrapper"
 
 	_ "github.com/go-micro/plugins/v4/registry/consul"
 	"github.com/spf13/viper"
@@ -35,8 +35,8 @@ func main() {
 		micro.Server(sgrpc.NewServer(server.Name(appName))),
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
-		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)))
+		micro.WrapHandler(wrapper.NewRequestWrapper()),
+		micro.WrapHandler(wrapper.NewAuthWrapper(a)))
 
 	userV1.RegisterUserServiceHandler(
 		service.Server(),

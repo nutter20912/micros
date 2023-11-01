@@ -21,7 +21,7 @@ func (s *userSubscriber) initWalletEvent(ctx context.Context, event *userV1.Regi
 		return err
 	}
 
-	if err := validate(ctx, microId); err != nil {
+	if err := queue.CheckMsgId(new(models.WalletEvent), microId); err != nil {
 		return err
 	}
 

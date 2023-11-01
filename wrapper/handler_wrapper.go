@@ -1,4 +1,4 @@
-package wapper
+package wrapper
 
 import (
 	"context"
@@ -32,7 +32,7 @@ func NewRequestWrapper() server.HandlerWrapper {
 	}
 }
 
-func NewAuthWapper(a baseAuth.Auth) server.HandlerWrapper {
+func NewAuthWrapper(a baseAuth.Auth) server.HandlerWrapper {
 	return func(fn server.HandlerFunc) server.HandlerFunc {
 		return func(ctx context.Context, req server.Request, rsp interface{}) error {
 			switch req.Method() {

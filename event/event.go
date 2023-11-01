@@ -21,7 +21,8 @@ var (
 	MARKET_MATCHED       = "market.spot.matched"
 	MARKET_PRICE_CHANGED = "market.price.changed"
 
-	WALLET_TRANSACTION = "wallet.transaction"
+	WALLET_TRANSACTION     = "wallet.transaction"
+	WALLET_BALANCE_CHECKED = "wallet.balance.checked"
 
 	USER_CREATED = "user.created"
 )

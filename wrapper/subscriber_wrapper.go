@@ -1,4 +1,4 @@
-package wapper
+package wrapper
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"go-micro.dev/v4/server"
 )
 
-func LogSubWapper() server.SubscriberWrapper {
+func LogSubWrapper() server.SubscriberWrapper {
 	return func(fn server.SubscriberFunc) server.SubscriberFunc {
 		return func(ctx context.Context, msg server.Message) error {
 			if err := queue.Validate(ctx); err != nil {

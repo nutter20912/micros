@@ -8,7 +8,7 @@ import (
 	"micros/config"
 	"micros/database/mysql"
 	boardV1 "micros/proto/board/v1"
-	"micros/wapper"
+	"micros/wrapper"
 
 	_ "github.com/go-micro/plugins/v4/broker/nats"
 	_ "github.com/go-micro/plugins/v4/registry/consul"
@@ -35,8 +35,8 @@ func main() {
 		micro.Server(sgrpc.NewServer(server.Name(appName))),
 		micro.Address(fmt.Sprintf(":%s", appPort)),
 		micro.Auth(a),
-		micro.WrapHandler(wapper.NewRequestWrapper()),
-		micro.WrapHandler(wapper.NewAuthWapper(a)),
+		micro.WrapHandler(wrapper.NewRequestWrapper()),
+		micro.WrapHandler(wrapper.NewAuthWrapper(a)),
 	)
 
 	boardV1.RegisterPostServiceHandler(

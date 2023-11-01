@@ -41,7 +41,7 @@ func (s *walletSubscriber) addDepositOrderEvent(
 	microId string,
 	msg *walletV1.TransactionEventMessage,
 ) error {
-	if err := validate(ctx, microId); err != nil {
+	if err := queue.CheckMsgId(new(models.DepositOrderEvent), microId); err != nil {
 		return err
 	}
 
@@ -65,6 +65,41 @@ func (s *walletSubscriber) addDepositOrderEvent(
 	}
 
 	new(models.DepositOrderEvent).Add(event)
+
+	return nil
+}
+
+func (s *walletSubscriber) addSpotOrderEvent(
+	ctx context.Context,
+	msg *walletV1.BalanceCheckedEventMessage,
+) error {
+	microId, err := queue.MicroId(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err := queue.CheckMsgId(new(models.SpotOrderEvent), microId); err != nil {
+		return err
+	}
+
+	spotOrderEvent := models.SpotOrderEvent{OrderId: msg.OrderId}
+	if err := spotOrderEvent.Last(); err != nil {
+		return err
+	}
+
+	spotOrderEvent.MsgId = microId
+
+	if msg.Success {
+		spotOrderEvent.Price = msg.Price
+		spotOrderEvent.Status = orderV1.SpotStatus_SPOT_STATUS_FILLED
+	} else {
+		spotOrderEvent.Status = orderV1.SpotStatus_SPOT_STATUS_REJECTED
+		spotOrderEvent.Memo = msg.Memo
+	}
+
+	if err := spotOrderEvent.Add(); err != nil {
+		return err
+	}
 
 	return nil
 }

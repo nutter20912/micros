@@ -32,7 +32,7 @@ type BalanceChecked struct {
 }
 
 func (e BalanceChecked) Publish(ctx context.Context, c client.Client) error {
-	pub := micro.NewEvent(event.WALLET_TRANSACTION, c)
+	pub := micro.NewEvent(event.WALLET_BALANCE_CHECKED, c)
 
 	return pub.Publish(context.Background(), e.Payload)
 }

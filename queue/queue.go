@@ -63,3 +63,20 @@ func ErrReportOrIgnore(err error) error {
 		return err
 	}
 }
+
+type EventModel interface {
+	Exist(string) (bool, error)
+}
+
+func CheckMsgId(model EventModel, microId string) error {
+	isExist, err := model.Exist(microId)
+	if err != nil {
+		return fmt.Errorf("query error: %v", err)
+	}
+
+	if isExist {
+		return ErrMessageConflicted
+	}
+
+	return nil
+}
