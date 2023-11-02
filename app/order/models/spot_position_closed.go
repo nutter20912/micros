@@ -6,6 +6,7 @@ import (
 	orderV1 "micros/proto/order/v1"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -47,4 +48,27 @@ func (s *SpotPositionClosed) Add() error {
 		return err
 	}
 	return nil
+}
+
+func (s *SpotPositionClosed) GetList(userId string) ([]*SpotPositionClosed, error) {
+	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
+
+	filter := bson.M{
+		"user_id": userId,
+		//"symbol":  symbol,
+	}
+
+	var data []*SpotPositionClosed
+	cur, err := coll.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = cur.All(context.Background(), &data); err != nil {
+		return nil, err
+	}
+
+	bson.MarshalExtJSON(data, false, false)
+
+	return data, nil
 }

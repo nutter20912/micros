@@ -38,19 +38,27 @@ func (s *SpotPosition) CollectionName() string {
 	return "spot_position"
 }
 
-func (s *SpotPosition) Get(symbol string, userId string) error {
+func (s *SpotPosition) GetList(userId string) ([]*SpotPosition, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
-		"user_id": userId,
-		"symbol":  symbol,
+		"user_id":       userId,
+		"open_quantity": bson.M{"$gt": 0},
 	}
 
-	if err := coll.FindOne(context.Background(), filter).Decode(s); err != nil {
-		return err
+	var data []*SpotPosition
+	cur, err := coll.Find(context.Background(), filter)
+	if err != nil {
+		return nil, err
 	}
 
-	return nil
+	if err = cur.All(context.Background(), &data); err != nil {
+		return nil, err
+	}
+
+	bson.MarshalExtJSON(data, false, false)
+
+	return data, nil
 }
 
 func (s *SpotPosition) Upsert() error {

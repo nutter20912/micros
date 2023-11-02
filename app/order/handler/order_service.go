@@ -137,3 +137,47 @@ func (s *OrderService) CreateSpotEvent(
 
 	return nil
 }
+
+func (s *OrderService) GetSpotPosition(
+	ctx context.Context,
+	req *orderV1.GetSpotPositionRequest,
+	rsp *orderV1.GetSpotPositionResponse,
+) error {
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	var sp models.SpotPosition
+	res, err := sp.GetList(userId)
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	var data []*orderV1.SpotPosition
+	bytes, _ := json.Marshal(res)
+	json.Unmarshal(bytes, &data)
+
+	rsp.Data = data
+
+	return nil
+}
+
+func (s *OrderService) GetSpotPositionClosed(
+	ctx context.Context,
+	req *orderV1.GetSpotPositionClosedRequest,
+	rsp *orderV1.GetSpotPositionClosedResponse,
+) error {
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	var spc models.SpotPositionClosed
+	res, err := spc.GetList(userId)
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	var data []*orderV1.SpotPositionClosed
+	bytes, _ := json.Marshal(res)
+	json.Unmarshal(bytes, &data)
+
+	rsp.Data = data
+
+	return nil
+}
