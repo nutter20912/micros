@@ -101,5 +101,16 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		return err
 	}
 
+	p := models.SpotPosition{
+		UserId:   spotOrderEvent.UserId,
+		OrderId:  spotOrderEvent.OrderId,
+		Symbol:   spotOrderEvent.Symbol,
+		Side:     spotOrderEvent.Side,
+		Price:    spotOrderEvent.Price,
+		Quantity: spotOrderEvent.Quantity,
+	}
+
+	p.Upsert()
+
 	return nil
 }
