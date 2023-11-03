@@ -84,6 +84,8 @@ func (s *WalletService) GetWalletStream(
 	req *walletV1.GetWalletStreamResquest,
 	stream walletV1.WalletService_GetWalletStreamStream,
 ) error {
+	defer stream.Context().Done()
+
 	userId, _ := metadata.Get(ctx, "user_id")
 
 	eventCursor := req.EventCursor
@@ -120,8 +122,6 @@ func (s *WalletService) GetWalletStream(
 			break
 		}
 	}
-
-	stream.Context().Done()
 
 	return nil
 }

@@ -8,6 +8,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // 平倉明細
@@ -59,7 +60,8 @@ func (s *SpotPositionClosed) GetList(userId string) ([]*SpotPositionClosed, erro
 	}
 
 	var data []*SpotPositionClosed
-	cur, err := coll.Find(context.Background(), filter)
+	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}})
+	cur, err := coll.Find(context.Background(), filter, opts)
 	if err != nil {
 		return nil, err
 	}

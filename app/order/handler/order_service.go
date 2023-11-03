@@ -3,6 +3,7 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	OrderEvent "micros/app/order/event"
 	"micros/app/order/models"
@@ -12,6 +13,8 @@ import (
 	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type OrderService struct {
@@ -178,6 +181,49 @@ func (s *OrderService) GetSpotPositionClosed(
 	json.Unmarshal(bytes, &data)
 
 	rsp.Data = data
+
+	return nil
+}
+
+func (s *OrderService) GetPositionStream(
+	ctx context.Context,
+	req *orderV1.GetPositionStreamResquest,
+	stream orderV1.OrderService_GetPositionStreamStream,
+) error {
+	defer stream.Context().Done()
+
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	for {
+		time.Sleep(time.Second)
+
+		var sp models.SpotPosition
+		spotPositions, err := sp.GetList(userId)
+		if err != nil {
+			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
+			break
+		}
+
+		var open []*orderV1.SpotPosition
+		openBytes, _ := json.Marshal(spotPositions)
+		json.Unmarshal(openBytes, &open)
+
+		var spc models.SpotPositionClosed
+		spotPositionCloseds, err := spc.GetList(userId)
+		if err != nil {
+			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
+			break
+		}
+
+		var close []*orderV1.SpotPositionClosed
+		closeBytes, _ := json.Marshal(spotPositionCloseds)
+		json.Unmarshal(closeBytes, &close)
+
+		if err := stream.Send(&orderV1.GetPositionStreamResponse{Open: open, Closed: close}); err != nil {
+			stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			break
+		}
+	}
 
 	return nil
 }

@@ -46,8 +46,10 @@ func (s *SpotPosition) GetList(userId string) ([]*SpotPosition, error) {
 		"open_quantity": bson.M{"$gt": 0},
 	}
 
+	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}})
+
 	var data []*SpotPosition
-	cur, err := coll.Find(context.Background(), filter)
+	cur, err := coll.Find(context.Background(), filter, opts)
 	if err != nil {
 		return nil, err
 	}
