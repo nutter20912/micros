@@ -91,37 +91,37 @@ func (s *WalletService) GetWalletStream(
 	eventCursor := req.EventCursor
 
 	for {
-		time.Sleep(time.Second)
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			time.Sleep(time.Second)
 
-		wallet, err := new(models.Wallet).Get(userId)
-		if err != nil {
-			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
-			break
-		}
-		var info *walletV1.Wallet
-		infoBytes, _ := json.Marshal(wallet)
-		json.Unmarshal(infoBytes, &info)
+			wallet, err := new(models.Wallet).Get(userId)
+			if err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
+			var info *walletV1.Wallet
+			infoBytes, _ := json.Marshal(wallet)
+			json.Unmarshal(infoBytes, &info)
 
-		walletEvents, err := new(models.WalletEvent).GetEvents(userId, eventCursor)
-		if err != nil {
-			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
-			break
-		}
+			walletEvents, err := new(models.WalletEvent).GetEvents(userId, eventCursor)
+			if err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
 
-		if len(walletEvents) != 0 {
-			lastId := walletEvents[0].Id.Hex()
-			eventCursor = &lastId
-		}
+			if len(walletEvents) != 0 {
+				lastId := walletEvents[0].Id.Hex()
+				eventCursor = &lastId
+			}
 
-		var events []*walletV1.WalletEvent
-		walletEventsBytes, _ := json.Marshal(walletEvents)
-		json.Unmarshal(walletEventsBytes, &events)
+			var events []*walletV1.WalletEvent
+			walletEventsBytes, _ := json.Marshal(walletEvents)
+			json.Unmarshal(walletEventsBytes, &events)
 
-		if err := stream.Send(&walletV1.GetWalletStreamResponse{Info: info, Events: events}); err != nil {
-			stream.SendMsg(status.Error(codes.Internal, err.Error()))
-			break
+			if err := stream.Send(&walletV1.GetWalletStreamResponse{Info: info, Events: events}); err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
 		}
 	}
-
-	return nil
 }

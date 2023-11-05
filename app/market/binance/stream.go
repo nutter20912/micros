@@ -20,16 +20,13 @@ func (s *Stream) ReadMessage() ([]byte, error) {
 
 	switch {
 	case bytes.Contains(message, []byte("depth")):
-		m := &depthMessage{}
-		message = m.getResult(message)
+		message = new(depthMessage).getResult(message)
 
 	case bytes.Contains(message, []byte("aggTrade")):
-		m := &aggTradeMessage{}
-		message = m.getResult(message)
+		message = new(AggTradeMessage).getResult(message)
 
 	case bytes.Contains(message, []byte("!miniTicker@arr")):
-		m := &MiniTickerArrMessage{}
-		message = m.getResult(message)
+		message = new(MiniTickerArrMessage).getResult(message)
 	}
 
 	return message, nil

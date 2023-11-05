@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"log"
+	"micros/app/market/handler"
 	"micros/app/market/subscriber"
 	"micros/app/market/tasks"
 	"micros/auth"
 	"micros/config"
 	"micros/database/redis"
+	"micros/event"
+	marketV1 "micros/proto/market/v1"
 	"micros/wrapper"
 
 	_ "micros/broker/natsjs"
@@ -38,6 +41,12 @@ func main() {
 		micro.Auth(a),
 		micro.WrapHandler(wrapper.NewRequestWrapper()),
 		micro.WrapHandler(wrapper.NewAuthWrapper(a)))
+
+	e := event.New(service.Client())
+
+	marketV1.RegisterMarketServiceHandler(
+		service.Server(),
+		handler.NewMarketService(service, e))
 
 	subscriber.Register(service)
 

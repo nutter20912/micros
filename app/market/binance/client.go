@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/gorilla/websocket"
@@ -51,7 +52,7 @@ func (c *Client) MiniTickersStream() (*Stream, error) {
 	return &Stream{conn: conn}, nil
 }
 
-func (c *Client) Stream() (*Stream, error) {
+func (c *Client) Stream(symbol string) (*Stream, error) {
 	conn, response, err := websocket.DefaultDialer.Dial(SPOT_URL, http.Header{})
 	if err != nil {
 		fmt.Println("連接失敗:", err)
@@ -63,12 +64,14 @@ func (c *Client) Stream() (*Stream, error) {
 		return nil, err
 	}
 
+	symbol = strings.ToLower(symbol)
+
 	mstr, _ := json.Marshal(Message{
 		Method: "SUBSCRIBE",
 		Params: []string{
 			// fmt.Sprintf("%s@kline_1m", c.Symbol),
 			// fmt.Sprintf("%s@depth10@100ms", c.Symbol),
-			// fmt.Sprintf("%s@aggTrade", c.Symbol),
+			fmt.Sprintf("%s@aggTrade", symbol),
 		},
 		Id: time.Now().Unix(),
 	})

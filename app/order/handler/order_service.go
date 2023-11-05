@@ -195,35 +195,35 @@ func (s *OrderService) GetPositionStream(
 	userId, _ := metadata.Get(ctx, "user_id")
 
 	for {
-		time.Sleep(time.Second)
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			time.Sleep(time.Second)
 
-		var sp models.SpotPosition
-		spotPositions, err := sp.GetList(userId)
-		if err != nil {
-			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
-			break
-		}
+			var sp models.SpotPosition
+			spotPositions, err := sp.GetList(userId)
+			if err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
 
-		var open []*orderV1.SpotPosition
-		openBytes, _ := json.Marshal(spotPositions)
-		json.Unmarshal(openBytes, &open)
+			var open []*orderV1.SpotPosition
+			openBytes, _ := json.Marshal(spotPositions)
+			json.Unmarshal(openBytes, &open)
 
-		var spc models.SpotPositionClosed
-		spotPositionCloseds, err := spc.GetList(userId)
-		if err != nil {
-			stream.SendMsg(status.Error(codes.NotFound, err.Error()))
-			break
-		}
+			var spc models.SpotPositionClosed
+			spotPositionCloseds, err := spc.GetList(userId)
+			if err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
 
-		var close []*orderV1.SpotPositionClosed
-		closeBytes, _ := json.Marshal(spotPositionCloseds)
-		json.Unmarshal(closeBytes, &close)
+			var close []*orderV1.SpotPositionClosed
+			closeBytes, _ := json.Marshal(spotPositionCloseds)
+			json.Unmarshal(closeBytes, &close)
 
-		if err := stream.Send(&orderV1.GetPositionStreamResponse{Open: open, Closed: close}); err != nil {
-			stream.SendMsg(status.Error(codes.Internal, err.Error()))
-			break
+			if err := stream.Send(&orderV1.GetPositionStreamResponse{Open: open, Closed: close}); err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
 		}
 	}
-
-	return nil
 }
