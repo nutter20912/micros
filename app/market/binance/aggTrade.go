@@ -21,12 +21,15 @@ type AggTradeMessage struct {
 	Data   aggTradeData `json:"data"`
 }
 
-func (a *AggTradeMessage) getResult(message []byte) []byte {
+func newAggTradeMessage(message []byte) StreamMessage {
+	return new(AggTradeMessage).parse(message)
+}
+
+func (a *AggTradeMessage) parse(message []byte) StreamMessage {
 	json.Unmarshal(message, a)
 
 	price := fmt.Sprintf("%.1f", a.Data.Price)
 	a.Data.Price, _ = strconv.ParseFloat(price, 64)
 
-	res, _ := json.Marshal(a)
-	return res
+	return a
 }

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"micros/app/market/binance"
 	"micros/event"
@@ -53,23 +52,44 @@ func (s *MarketService) GetTradeStream(
 				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
 			}
 
-			var aggTradeMsg binance.AggTradeMessage
-			json.Unmarshal([]byte(rsp), &aggTradeMsg)
+			streamRsp := &marketV1.GetTradeStreamResponse{}
 
-			data := marketV1.AggTradeData{
-				EventType:       aggTradeMsg.Data.EventType,
-				EventTime:       aggTradeMsg.Data.EventTime,
-				Price:           aggTradeMsg.Data.Price,
-				Symbol:          aggTradeMsg.Data.Symbol,
-				Quantity:        aggTradeMsg.Data.Quantity,
-				TransactionTime: aggTradeMsg.Data.TransactionTime,
-				IsSell:          aggTradeMsg.Data.IsSell}
+			switch val := rsp.(type) {
+			case *binance.AggTradeMessage:
+				streamRsp.Data = &marketV1.GetTradeStreamResponse_AggTradeData{
+					AggTradeData: &marketV1.AggTradeData{
+						EventType:       val.Data.EventType,
+						EventTime:       val.Data.EventTime,
+						Price:           val.Data.Price,
+						Symbol:          val.Data.Symbol,
+						Quantity:        val.Data.Quantity,
+						TransactionTime: val.Data.TransactionTime,
+						IsSell:          val.Data.IsSell}}
 
-			if data.Price == 0 {
+			case *binance.KlineMessage:
+				streamRsp.Data = &marketV1.GetTradeStreamResponse_KlineData{
+					KlineData: &marketV1.KlineData{
+						EventType: val.Data.EventType,
+						EventTime: val.Data.EventTime,
+						Symbol:    val.Data.Symbol,
+						Kline: &marketV1.Kline{
+							StartTime: val.Data.Kline.StartTime,
+							EndTime:   val.Data.Kline.EndTime,
+							Symbol:    val.Data.Kline.Symbol,
+							Interval:  val.Data.Kline.Interval,
+							Open:      val.Data.Kline.Open,
+							Close:     val.Data.Kline.Close,
+							High:      val.Data.Kline.High,
+							Low:       val.Data.Kline.Low,
+						},
+					},
+				}
+
+			default:
 				continue
 			}
 
-			if err := stream.Send(&marketV1.GetTradeStreamResponse{AggTrade: &data}); err != nil {
+			if err := stream.Send(streamRsp); err != nil {
 				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
 			}
 		}

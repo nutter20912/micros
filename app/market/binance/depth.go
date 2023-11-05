@@ -13,12 +13,16 @@ type depthData struct {
 	Asks [][]string `json:"asks"` //委賣
 }
 
-type depthMessage struct {
+type DepthMessage struct {
 	Stream string    `json:"stream"`
 	Data   depthData `json:"data"`
 }
 
-func (d *depthMessage) getMergeDepth(data [][]string) [][]string {
+func newDepthMessage(message []byte) StreamMessage {
+	return new(DepthMessage).parse(message)
+}
+
+func (d *DepthMessage) getMergeDepth(data [][]string) [][]string {
 	merge := map[string]string{}
 
 	for _, value := range data {
@@ -46,12 +50,11 @@ func (d *depthMessage) getMergeDepth(data [][]string) [][]string {
 }
 
 // 合併結果至整數
-func (d *depthMessage) getResult(message []byte) []byte {
+func (d *DepthMessage) parse(message []byte) StreamMessage {
 	json.Unmarshal(message, d)
 
 	d.Data.Bids = d.getMergeDepth(d.Data.Bids)
 	d.Data.Asks = d.getMergeDepth(d.Data.Asks)
 
-	res, _ := json.Marshal(d)
-	return res
+	return d
 }

@@ -2,7 +2,6 @@ package tasks
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"micros/app/market/binance"
@@ -28,9 +27,8 @@ func (e *getTickers) Run() {
 			break
 		}
 
-		var tickers binance.MiniTickerArrMessage
-		if err := json.Unmarshal([]byte(rsp), &tickers); err != nil {
-			log.Println(err)
+		tickers, ok := rsp.(*binance.MiniTickerArrMessage)
+		if !ok {
 			continue
 		}
 

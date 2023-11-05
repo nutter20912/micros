@@ -18,7 +18,11 @@ type MiniTickerArrMessage struct {
 	Data   []MiniTickerData `json:"data"`
 }
 
-func (a *MiniTickerArrMessage) getResult(message []byte) []byte {
+func newMiniTickerArrMessage(message []byte) StreamMessage {
+	return new(MiniTickerArrMessage).parse(message)
+}
+
+func (a *MiniTickerArrMessage) parse(message []byte) StreamMessage {
 	json.Unmarshal(message, a)
 
 	var newData []MiniTickerData
@@ -31,6 +35,5 @@ func (a *MiniTickerArrMessage) getResult(message []byte) []byte {
 
 	a.Data = newData
 
-	res, _ := json.Marshal(a)
-	return res
+	return a
 }

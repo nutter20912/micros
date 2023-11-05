@@ -19,7 +19,7 @@ type Client struct {
 	Ctx context.Context
 }
 
-type Message struct {
+type RequestMessage struct {
 	Method string   `json:"method"`
 	Params []string `json:"params"`
 	Id     int64    `json:"id"`
@@ -41,7 +41,7 @@ func (c *Client) MiniTickersStream() (*Stream, error) {
 		return nil, err
 	}
 
-	mstr, _ := json.Marshal(Message{
+	mstr, _ := json.Marshal(RequestMessage{
 		Method: "SUBSCRIBE",
 		Params: []string{"!miniTicker@arr"},
 		Id:     time.Now().Unix(),
@@ -66,11 +66,11 @@ func (c *Client) Stream(symbol string) (*Stream, error) {
 
 	symbol = strings.ToLower(symbol)
 
-	mstr, _ := json.Marshal(Message{
+	mstr, _ := json.Marshal(RequestMessage{
 		Method: "SUBSCRIBE",
 		Params: []string{
-			// fmt.Sprintf("%s@kline_1m", c.Symbol),
-			// fmt.Sprintf("%s@depth10@100ms", c.Symbol),
+			fmt.Sprintf("%s@kline_1m", symbol),
+			//fmt.Sprintf("%s@depth10@100ms", symbol),
 			fmt.Sprintf("%s@aggTrade", symbol),
 		},
 		Id: time.Now().Unix(),
