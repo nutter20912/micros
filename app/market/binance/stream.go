@@ -32,7 +32,7 @@ type StreamMessage interface {
 func MessageFactory(message []byte) StreamMessage {
 	switch {
 	case bytes.Contains(message, []byte("depth")):
-		//return newDepthMessage(message)
+		return newDepthMessage(message)
 
 	case bytes.Contains(message, []byte("aggTrade")):
 		return newAggTradeMessage(message)

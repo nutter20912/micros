@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"fmt"
 	"micros/app/market/binance"
 	"micros/event"
 	marketV1 "micros/proto/market/v1"
@@ -46,7 +45,6 @@ func (s *MarketService) GetTradeStream(
 		case <-ctx.Done():
 			return nil
 		default:
-			fmt.Println("read message")
 			rsp, err := c.ReadMessage()
 			if err != nil {
 				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
@@ -82,8 +80,22 @@ func (s *MarketService) GetTradeStream(
 							High:      val.Data.Kline.High,
 							Low:       val.Data.Kline.Low,
 						},
-					},
+					}}
+
+			case *binance.DepthMessage:
+				depthData := &marketV1.DepthData{
+					Bids: []*marketV1.DepthData_DepthArr{},
+					Asks: []*marketV1.DepthData_DepthArr{}}
+
+				for _, v := range val.Data.Bids {
+					depthData.Bids = append(depthData.Bids, &marketV1.DepthData_DepthArr{PriceAndQty: v})
 				}
+
+				for _, v := range val.Data.Asks {
+					depthData.Asks = append(depthData.Asks, &marketV1.DepthData_DepthArr{PriceAndQty: v})
+				}
+
+				streamRsp.Data = &marketV1.GetTradeStreamResponse_DepthData{DepthData: depthData}
 
 			default:
 				continue

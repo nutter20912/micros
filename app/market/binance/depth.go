@@ -3,6 +3,7 @@ package binance
 import (
 	"encoding/json"
 	"fmt"
+	"math"
 	"micros/helper"
 	"sort"
 	"strconv"
@@ -27,6 +28,7 @@ func (d *DepthMessage) getMergeDepth(data [][]string) [][]string {
 
 	for _, value := range data {
 		priceF64, _ := strconv.ParseFloat(value[0], 64)
+		priceF64 = math.Floor(priceF64*10) / 10
 		priceStr := fmt.Sprintf("%.1f", priceF64)
 
 		if total, ok := merge[priceStr]; ok {

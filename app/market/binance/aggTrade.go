@@ -2,8 +2,6 @@ package binance
 
 import (
 	"encoding/json"
-	"fmt"
-	"strconv"
 )
 
 type aggTradeData struct {
@@ -27,9 +25,6 @@ func newAggTradeMessage(message []byte) StreamMessage {
 
 func (a *AggTradeMessage) parse(message []byte) StreamMessage {
 	json.Unmarshal(message, a)
-
-	price := fmt.Sprintf("%.1f", a.Data.Price)
-	a.Data.Price, _ = strconv.ParseFloat(price, 64)
 
 	return a
 }
