@@ -3,6 +3,8 @@ package handler
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	OrderEvent "micros/app/order/event"
@@ -13,6 +15,7 @@ import (
 	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
+	"go.mongodb.org/mongo-driver/mongo"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -139,6 +142,76 @@ func (s *OrderService) CreateSpotEvent(
 	}
 
 	return nil
+}
+
+func (s *OrderService) GetSpotEventStream(
+	ctx context.Context,
+	req *orderV1.GetSpotEventStreamRequest,
+	stream orderV1.OrderService_GetSpotEventStreamStream,
+) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*10)
+
+	defer func() {
+		stream.Context().Done()
+		cancel()
+		fmt.Println("leave GetSpotEventStream")
+	}()
+
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	sendMsgFunc := func(res *models.SpotOrderEvent) error {
+		var data *orderV1.SpotOrderEvent
+		bytes, _ := json.Marshal(res)
+		json.Unmarshal(bytes, &data)
+
+		if err := stream.Send(&orderV1.GetSpotEventStreamResponse{Data: data}); err != nil {
+			return err
+		}
+
+		return nil
+	}
+
+	soe := models.SpotOrderEvent{UserId: userId, OrderId: req.OrderId}
+	res, err := soe.Get()
+	if err != nil {
+		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+	}
+
+	soe.Id = res.Id
+	if err = sendMsgFunc(res); err != nil {
+		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		default:
+			time.Sleep(time.Second)
+
+			res, err := soe.Get()
+			if err != nil && !errors.Is(mongo.ErrNoDocuments, err) {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
+
+			if res == nil {
+				continue
+			}
+
+			soe.Id = res.Id
+
+			if err = sendMsgFunc(res); err != nil {
+				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			}
+
+			switch res.Status {
+			case orderV1.SpotStatus_SPOT_STATUS_FILLED:
+				return nil
+			case orderV1.SpotStatus_SPOT_STATUS_CANCELED:
+				return nil
+			}
+		}
+	}
 }
 
 func (s *OrderService) GetSpotPosition(

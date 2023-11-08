@@ -91,3 +91,19 @@ func (e *SpotOrderEvent) Exist(microId string) (bool, error) {
 
 	return true, nil
 }
+
+func (e *SpotOrderEvent) Get() (res *SpotOrderEvent, err error) {
+	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
+
+	filter := bson.M{"order_id": e.OrderId, "user_id": e.UserId}
+
+	if e.Id != primitive.NilObjectID {
+		filter["_id"] = bson.M{"$gt": e.Id}
+	}
+
+	if err := coll.FindOne(context.Background(), filter).Decode(&res); err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
