@@ -23,6 +23,7 @@
 - market
 - order
 - wallet
+- notify
 
 ---
 ## Setup

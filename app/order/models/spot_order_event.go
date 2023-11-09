@@ -107,3 +107,20 @@ func (e *SpotOrderEvent) Get() (res *SpotOrderEvent, err error) {
 
 	return res, nil
 }
+
+func (e *SpotOrderEvent) Count() (int64, error) {
+	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
+
+	filter := bson.M{}
+
+	if e.OrderId != "" {
+		filter["order_id"] = e.OrderId
+	}
+
+	count, err := coll.CountDocuments(context.Background(), filter)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, err
+}

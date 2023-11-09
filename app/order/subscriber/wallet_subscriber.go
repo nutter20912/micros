@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"micros/app/order/models"
+	"micros/event"
 	orderV1 "micros/proto/order/v1"
 	walletV1 "micros/proto/wallet/v1"
 	"micros/queue"
@@ -15,6 +16,8 @@ import (
 
 type walletSubscriber struct {
 	Service micro.Service
+
+	Event *event.Event
 }
 
 func (s *walletSubscriber) addOrderEvent(ctx context.Context, m *[]byte) error {
@@ -83,6 +86,16 @@ func (s *walletSubscriber) addSpotOrderEvent(
 	}
 
 	spotOrderEvent := models.SpotOrderEvent{OrderId: msg.OrderId}
+
+	count, err := spotOrderEvent.Count()
+	if err != nil {
+		return err
+	}
+
+	if count > 1 {
+		return queue.ErrMessageConflicted
+	}
+
 	if err := spotOrderEvent.Last(); err != nil {
 		return err
 	}
@@ -100,6 +113,11 @@ func (s *walletSubscriber) addSpotOrderEvent(
 	if err := spotOrderEvent.Add(); err != nil {
 		return err
 	}
+
+	s.Event.Dispatch(event.Notify{
+		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
+		Name:    "SpotOrderEvent",
+		Payload: spotOrderEvent})
 
 	p := models.SpotPosition{
 		UserId:   spotOrderEvent.UserId,

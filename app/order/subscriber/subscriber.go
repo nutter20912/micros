@@ -6,8 +6,8 @@ import (
 	"go-micro.dev/v4"
 )
 
-func Register(s micro.Service) {
-	walletSub := &walletSubscriber{Service: s}
+func Register(s micro.Service, e *event.Event) {
+	walletSub := &walletSubscriber{Service: s, Event: e}
 
 	r := map[string]interface{}{
 		event.WALLET_TRANSACTION:     walletSub.addOrderEvent,

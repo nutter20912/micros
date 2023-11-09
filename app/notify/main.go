@@ -3,14 +3,12 @@ package main
 import (
 	"fmt"
 	"log"
-	"micros/app/order/handler"
-	"micros/app/order/subscriber"
+	"micros/app/notify/handler"
 	"micros/auth"
 	_ "micros/broker/natsjs"
 	"micros/config"
-	"micros/database/mongo"
 	"micros/event"
-	orderV1 "micros/proto/order/v1"
+	notifyV1 "micros/proto/notify/v1"
 	"micros/wrapper"
 
 	_ "github.com/go-micro/plugins/v4/registry/consul"
@@ -22,8 +20,7 @@ import (
 )
 
 func init() {
-	config.Init("order")
-	mongo.Init()
+	config.Init("notify")
 }
 
 func main() {
@@ -41,13 +38,13 @@ func main() {
 		micro.WrapHandler(wrapper.NewAuthWrapper(a)),
 		micro.WrapSubscriber(wrapper.LogSubWrapper()))
 
+	service.Options().Broker.Connect()
+
 	e := event.New(service.Client())
 
-	orderV1.RegisterOrderServiceHandler(
+	notifyV1.RegisterNotifyServiceHandler(
 		service.Server(),
-		handler.NewOrderService(service, e))
-
-	subscriber.Register(service, e)
+		handler.NewNotifyService(service, e))
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)

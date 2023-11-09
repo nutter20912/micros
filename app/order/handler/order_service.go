@@ -141,6 +141,11 @@ func (s *OrderService) CreateSpotEvent(
 		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
 	}
 
+	s.Event.Dispatch(event.Notify{
+		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
+		Name:    "SpotOrderEvent",
+		Payload: spotOrderEvent})
+
 	return nil
 }
 
@@ -284,17 +289,7 @@ func (s *OrderService) GetPositionStream(
 			openBytes, _ := json.Marshal(spotPositions)
 			json.Unmarshal(openBytes, &open)
 
-			var spc models.SpotPositionClosed
-			spotPositionCloseds, err := spc.GetList(userId)
-			if err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
-			}
-
-			var close []*orderV1.SpotPositionClosed
-			closeBytes, _ := json.Marshal(spotPositionCloseds)
-			json.Unmarshal(closeBytes, &close)
-
-			if err := stream.Send(&orderV1.GetPositionStreamResponse{Open: open, Closed: close}); err != nil {
+			if err := stream.Send(&orderV1.GetPositionStreamResponse{Open: open}); err != nil {
 				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
 			}
 		}

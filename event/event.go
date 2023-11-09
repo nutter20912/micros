@@ -39,7 +39,7 @@ type Publisher interface {
 	Publish(context.Context, client.Client) error
 }
 
-func (e *Event) Dispatch(ee Publisher, opts ...DispatchOption) error {
+func (e *Event) Dispatch(p Publisher, opts ...DispatchOption) error {
 	mdOpts := map[string]string{}
 
 	for _, o := range opts {
@@ -48,7 +48,7 @@ func (e *Event) Dispatch(ee Publisher, opts ...DispatchOption) error {
 
 	ctx := metadata.NewContext(context.Background(), mdOpts)
 
-	if err := ee.Publish(ctx, e.client); err != nil {
+	if err := p.Publish(ctx, e.client); err != nil {
 		return fmt.Errorf("publish error: %v", err)
 	}
 
