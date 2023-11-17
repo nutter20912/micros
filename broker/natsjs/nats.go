@@ -4,6 +4,7 @@ package natsjs
 import (
 	"context"
 	"errors"
+	"log"
 	"strings"
 	"sync"
 
@@ -67,6 +68,7 @@ func (p *publication) Ack() error {
 }
 
 func (p *publication) Error() error {
+	log.Printf("[natsjs] %v", p.err)
 	return p.err
 }
 
@@ -80,6 +82,8 @@ func (s *subscriber) Topic() string {
 
 func (s *subscriber) Unsubscribe() error {
 	s.cc.Stop()
+
+	log.Println("[natsjs] Unsubscribe")
 
 	return nil
 }
@@ -168,6 +172,7 @@ func (n *natsBroker) Disconnect() error {
 
 	// close the client connection
 	n.conn.Close()
+	log.Println("[natsjs] Disconnect")
 
 	// set not connected
 	n.connected = false
@@ -366,6 +371,8 @@ func (n *natsBroker) setOption(opts ...broker.Option) {
 
 func (n *natsBroker) onClose(conn *nats.Conn) {
 	n.closeCh <- nil
+
+	log.Println("[natsjs] onClose")
 }
 
 func (n *natsBroker) onAsyncError(conn *nats.Conn, sub *nats.Subscription, err error) {

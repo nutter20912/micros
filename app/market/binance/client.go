@@ -70,7 +70,7 @@ func (c *Client) Stream(symbol string) (*Stream, error) {
 		Method: "SUBSCRIBE",
 		Params: []string{
 			fmt.Sprintf("%s@kline_1m", symbol),
-			fmt.Sprintf("%s@depth10@1000ms", symbol),
+			fmt.Sprintf("%s@depth10@100ms", symbol),
 			fmt.Sprintf("%s@aggTrade", symbol),
 		},
 		Id: time.Now().Unix(),

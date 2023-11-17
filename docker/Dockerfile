@@ -1,14 +1,20 @@
-FROM golang:1.20-alpine
+FROM golang:1.20-alpine AS base
 
 WORKDIR /app
+
+COPY go.* ./
+
+RUN go mod download
 
 ###########################################################################
 # local
 ###########################################################################
+FROM base AS local
+
 RUN apk --update --no-cache add protobuf make curl git
 
 # install go-micro tools
-RUN go install github.com/go-micro/cli/cmd/go-micro@v1.1.4
+#RUN go install github.com/go-micro/cli/cmd/go-micro@v1.1.4
 
 # ! CANNOT USE IN DOCKER
 # install database migrate tools
@@ -20,8 +26,33 @@ RUN go install github.com/go-micro/cli/cmd/go-micro@v1.1.4
 # debug tool - dlv
 RUN go install github.com/go-delve/delve/cmd/dlv@latest
 
-COPY go.* ./
+COPY . /app
 
-RUN go mod tidy
+ENTRYPOINT ["sleep", "infinity"]
+
+###########################################################################
+# build image
+###########################################################################
+FROM base AS builder
+
+ARG APP_NAME
 
 COPY . /app
+
+RUN CGO_ENABLED=0 GOOS=linux \
+    go build ./app/${APP_NAME}
+
+FROM scratch AS image
+
+ARG APP_NAME
+
+WORKDIR /app
+
+COPY --from=builder /app/${APP_NAME} ./main
+
+COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
+COPY --from=builder /app/.env .
+COPY --from=builder /app/config ./config
+COPY --from=builder /app/database/migrations/ ./database/migrations
+
+CMD ["./main"]

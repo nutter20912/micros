@@ -16,7 +16,10 @@ type getTickers struct {
 
 func (e *getTickers) Run() {
 	rdb := redis.Get()
-	stream, _ := binance.NewClient(context.Background()).MiniTickersStream()
+	stream, err := binance.NewClient(context.Background()).MiniTickersStream()
+	if err != nil {
+		log.Fatalln(err)
+	}
 
 	defer stream.Close()
 

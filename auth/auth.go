@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
@@ -38,10 +39,19 @@ var (
 )
 
 func init() {
-	privateKeyBytes, _ := os.ReadFile("private_key.pem")
-	publicKeyBytes, _ := os.ReadFile("public_key.pem")
-	privateKey = string(base64.StdEncoding.EncodeToString(privateKeyBytes))
-	publicKey = string(base64.StdEncoding.EncodeToString(publicKeyBytes))
+	privateKeyBytes, err := os.ReadFile("private_key.pem")
+	if err != nil {
+		log.Println(err)
+	} else {
+		privateKey = string(base64.StdEncoding.EncodeToString(privateKeyBytes))
+	}
+
+	publicKeyBytes, err := os.ReadFile("public_key.pem")
+	if err != nil {
+		log.Println(err)
+	} else {
+		publicKey = string(base64.StdEncoding.EncodeToString(publicKeyBytes))
+	}
 }
 
 func NewMicroAuth() baseAuth.Auth {
