@@ -5,10 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"micros/app/user/event"
+	UserEvent "micros/app/user/event"
 	"micros/app/user/models"
 	"micros/auth"
 	"micros/auth/hash"
+	"micros/event"
 	userV1 "micros/proto/user/v1"
 
 	"go-micro.dev/v4"
@@ -18,13 +19,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewUserService(service micro.Service, db *gorm.DB) *UserService {
-	return &UserService{service: service, db: db}
+func NewUserService(service micro.Service, db *gorm.DB, e *event.Event) *UserService {
+	return &UserService{service: service, db: db, event: e}
 }
 
 type UserService struct {
 	service micro.Service
 	db      *gorm.DB
+	event   *event.Event
 }
 
 func (g *UserService) Register(
@@ -50,7 +52,9 @@ func (g *UserService) Register(
 		return microErrors.InternalServerError("123", result.Error.Error())
 	}
 
-	event.UserCreated{Client: g.service.Client()}.Dispatch(fmt.Sprint(user.ID))
+	if err := g.event.Dispatch(UserEvent.UserCreated{Payload: fmt.Sprint(user.ID)}); err != nil {
+		fmt.Println(err)
+	}
 
 	rsp.Result = &userV1.Result{Code: 200, Message: "success"}
 

@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"micros/event"
 	userV1 "micros/proto/user/v1"
 
@@ -11,15 +10,13 @@ import (
 )
 
 type UserCreated struct {
-	Client client.Client
+	Payload string
 }
 
-func (u UserCreated) Dispatch(userId string) {
-	pub := micro.NewEvent(event.USER_CREATED, u.Client)
+func (o UserCreated) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.USER_CREATED, c)
 
-	msg := &userV1.RegisteredEventMessage{UserId: userId}
+	msg := &userV1.RegisteredEventMessage{UserId: o.Payload}
 
-	if err := pub.Publish(context.Background(), msg); err != nil {
-		fmt.Printf("error publishing: %v", err)
-	}
+	return pub.Publish(ctx, msg)
 }

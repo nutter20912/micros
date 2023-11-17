@@ -8,6 +8,7 @@ import (
 	_ "micros/broker/natsjs"
 	"micros/config"
 	"micros/database/mysql"
+	"micros/event"
 	userV1 "micros/proto/user/v1"
 	"micros/wrapper"
 
@@ -38,9 +39,11 @@ func main() {
 		micro.WrapHandler(wrapper.NewRequestWrapper()),
 		micro.WrapHandler(wrapper.NewAuthWrapper(a)))
 
+	e := event.New(service.Client())
+
 	userV1.RegisterUserServiceHandler(
 		service.Server(),
-		handler.NewUserService(service, mysql.Get()))
+		handler.NewUserService(service, mysql.Get(), e))
 
 	if err := service.Run(); err != nil {
 		log.Fatal(err)
