@@ -45,14 +45,14 @@ func (ns *notifyService) GetStream(
 		msg := &notifyV1.GetStreamResponse{Data: &notifyV1.ChannelMessage{Payload: p.Message().Body}}
 
 		if err := stream.Send(msg); err != nil {
-			return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+			return status.Error(codes.Internal, err.Error())
 		}
 
 		return nil
 	}, opts)
 
 	if err != nil {
-		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	defer s.Unsubscribe()

@@ -29,13 +29,13 @@ func (s *MarketService) GetTradeStream(
 	defer stream.Context().Done()
 
 	if err := req.Validate(); err != nil {
-		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	// TODO Validate symbol
 	c, err := binance.NewClient(context.Background()).Stream(*req.Symbol)
 	if err != nil {
-		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	defer c.Close()
@@ -47,7 +47,7 @@ func (s *MarketService) GetTradeStream(
 		default:
 			rsp, err := c.ReadMessage()
 			if err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 
 			streamRsp := &marketV1.GetTradeStreamResponse{}
@@ -102,7 +102,7 @@ func (s *MarketService) GetTradeStream(
 			}
 
 			if err := stream.Send(streamRsp); err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 		}
 	}

@@ -99,7 +99,7 @@ func (s *WalletService) GetWalletStream(
 
 			wallet, err := new(models.Wallet).Get(userId)
 			if err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 			var info *walletV1.Wallet
 			infoBytes, _ := json.Marshal(wallet)
@@ -107,7 +107,7 @@ func (s *WalletService) GetWalletStream(
 
 			walletEvents, err := new(models.WalletEvent).GetEvents(userId, eventCursor)
 			if err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 
 			if len(walletEvents) != 0 {
@@ -120,7 +120,7 @@ func (s *WalletService) GetWalletStream(
 			json.Unmarshal(walletEventsBytes, &events)
 
 			if err := stream.Send(&walletV1.GetWalletStreamResponse{Info: info, Events: events}); err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 		}
 	}

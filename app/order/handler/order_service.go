@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	OrderEvent "micros/app/order/event"
@@ -179,12 +180,12 @@ func (s *OrderService) GetSpotEventStream(
 	soe := models.SpotOrderEvent{UserId: userId, OrderId: req.OrderId}
 	res, err := soe.Get()
 	if err != nil {
-		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	soe.Id = res.Id
 	if err = sendMsgFunc(res); err != nil {
-		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	for {
@@ -196,7 +197,7 @@ func (s *OrderService) GetSpotEventStream(
 
 			res, err := soe.Get()
 			if err != nil && !errors.Is(mongo.ErrNoDocuments, err) {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 
 			if res == nil {
@@ -206,7 +207,7 @@ func (s *OrderService) GetSpotEventStream(
 			soe.Id = res.Id
 
 			if err = sendMsgFunc(res); err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 
 			switch res.Status {
@@ -229,7 +230,7 @@ func (s *OrderService) GetSpotPosition(
 	}
 
 	userId, _ := metadata.Get(ctx, "user_id")
-	symbol := req.GetSymbol()
+	symbol := strings.ToUpper(req.GetSymbol())
 
 	spotPositions, paginator, err := new(models.SpotPosition).Get(userId, symbol, req.Page, req.Limit)
 	if err != nil {
@@ -260,7 +261,7 @@ func (s *OrderService) GetSpotPositionClosed(
 	}
 
 	userId, _ := metadata.Get(ctx, "user_id")
-	symbol := req.GetSymbol()
+	symbol := strings.ToUpper(req.GetSymbol())
 
 	spotPositions, paginator, err := new(models.SpotPositionClosed).Get(userId, symbol, req.Page, req.Limit)
 	if err != nil {
@@ -289,11 +290,11 @@ func (s *OrderService) GetPositionStream(
 	defer stream.Context().Done()
 
 	if err := req.Validate(); err != nil {
-		return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+		return status.Error(codes.Internal, err.Error())
 	}
 
 	userId, _ := metadata.Get(ctx, "user_id")
-	symbol := req.GetSymbol()
+	symbol := strings.ToUpper(req.GetSymbol())
 
 	for {
 		select {
@@ -305,7 +306,7 @@ func (s *OrderService) GetPositionStream(
 			var sp models.SpotPosition
 			spotPositions, err := sp.GetList(userId, symbol)
 			if err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 
 			var open []*orderV1.SpotPosition
@@ -313,7 +314,7 @@ func (s *OrderService) GetPositionStream(
 			json.Unmarshal(openBytes, &open)
 
 			if err := stream.Send(&orderV1.GetPositionStreamResponse{Open: open}); err != nil {
-				return stream.SendMsg(status.Error(codes.Internal, err.Error()))
+				return status.Error(codes.Internal, err.Error())
 			}
 		}
 	}
