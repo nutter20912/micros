@@ -51,6 +51,29 @@ func (s *SpotPositionClosed) Add() error {
 	return nil
 }
 
+func (s *SpotPositionClosed) Get(userId string, symbol string, page *int64, limit *int64) ([]*SpotPositionClosed, *mongodb.Paginatior, error) {
+	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
+
+	filter := bson.M{
+		"symbol":  symbol,
+		"user_id": userId,
+	}
+
+	var data []*SpotPositionClosed
+
+	paginatior, err := mongodb.NewPagination(coll).
+		Where(filter).
+		Desc("_id").
+		Page(page).
+		Limit(limit).
+		Find(context.Background(), &data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return data, paginatior, nil
+}
+
 func (s *SpotPositionClosed) GetList(userId string) ([]*SpotPositionClosed, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 

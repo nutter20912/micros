@@ -38,10 +38,35 @@ func (s *SpotPosition) CollectionName() string {
 	return "spot_position"
 }
 
-func (s *SpotPosition) GetList(userId string) ([]*SpotPosition, error) {
+func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int64) ([]*SpotPosition, *mongodb.Paginatior, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
+		"symbol":        symbol,
+		"user_id":       userId,
+		"open_quantity": bson.M{"$gt": 0},
+	}
+
+	var data []*SpotPosition
+
+	paginatior, err := mongodb.NewPagination(coll).
+		Where(filter).
+		Desc("_id").
+		Page(page).
+		Limit(limit).
+		Find(context.Background(), &data)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return data, paginatior, nil
+}
+
+func (s *SpotPosition) GetList(userId string, symbol string) ([]*SpotPosition, error) {
+	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
+
+	filter := bson.M{
+		"symbol":        symbol,
 		"user_id":       userId,
 		"open_quantity": bson.M{"$gt": 0},
 	}
