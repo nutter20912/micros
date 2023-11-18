@@ -231,7 +231,7 @@ func (s *OrderService) GetSpotPosition(
 	userId, _ := metadata.Get(ctx, "user_id")
 	symbol := req.GetSymbol()
 
-	spotPositions, paginatior, err := new(models.SpotPosition).Get(userId, symbol, req.Page, req.Limit)
+	spotPositions, paginator, err := new(models.SpotPosition).Get(userId, symbol, req.Page, req.Limit)
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -241,7 +241,7 @@ func (s *OrderService) GetSpotPosition(
 	json.Unmarshal(bytes, &data)
 
 	var p *orderV1.Paginator
-	bytes, _ = json.Marshal(paginatior)
+	bytes, _ = json.Marshal(paginator)
 	json.Unmarshal(bytes, &p)
 
 	rsp.Data = data
@@ -262,7 +262,7 @@ func (s *OrderService) GetSpotPositionClosed(
 	userId, _ := metadata.Get(ctx, "user_id")
 	symbol := req.GetSymbol()
 
-	spotPositions, paginatior, err := new(models.SpotPositionClosed).Get(userId, symbol, req.Page, req.Limit)
+	spotPositions, paginator, err := new(models.SpotPositionClosed).Get(userId, symbol, req.Page, req.Limit)
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -272,7 +272,7 @@ func (s *OrderService) GetSpotPositionClosed(
 	json.Unmarshal(bytes, &data)
 
 	var p *orderV1.Paginator
-	bytes, _ = json.Marshal(paginatior)
+	bytes, _ = json.Marshal(paginator)
 	json.Unmarshal(bytes, &p)
 
 	rsp.Data = data

@@ -38,7 +38,7 @@ func (s *SpotPosition) CollectionName() string {
 	return "spot_position"
 }
 
-func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int64) ([]*SpotPosition, *mongodb.Paginatior, error) {
+func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int64) ([]*SpotPosition, *mongodb.Paginator, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
@@ -49,7 +49,7 @@ func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int
 
 	var data []*SpotPosition
 
-	paginatior, err := mongodb.NewPagination(coll).
+	paginator, err := mongodb.NewPagination(coll).
 		Where(filter).
 		Desc("_id").
 		Page(page).
@@ -59,7 +59,7 @@ func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int
 		return nil, nil, err
 	}
 
-	return data, paginatior, nil
+	return data, paginator, nil
 }
 
 func (s *SpotPosition) GetList(userId string, symbol string) ([]*SpotPosition, error) {

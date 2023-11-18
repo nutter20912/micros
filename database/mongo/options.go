@@ -9,11 +9,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type Paginatior struct {
-	CurrentPage int64 `json:"current_page,omitempty"`
-	LastPage    int64 `json:"last_page,omitempty"`
-	PerPage     int64 `json:"per_page,omitempty"`
-	Total       int64 `json:"total,omitempty"`
+type Paginator struct {
+	CurrentPage int64 `json:"current_page"`
+	LastPage    int64 `json:"last_page"`
+	PerPage     int64 `json:"per_page"`
+	Total       int64 `json:"total"`
 }
 
 type Pagination struct {
@@ -70,7 +70,7 @@ func (p *Pagination) Asc(key string) *Pagination {
 	return p
 }
 
-func (p *Pagination) Find(ctx context.Context, results interface{}) (*Paginatior, error) {
+func (p *Pagination) Find(ctx context.Context, results interface{}) (*Paginator, error) {
 	skip := (p.currentPage - 1) * p.perPage
 
 	cur, err := p.coll.Find(ctx, p.filter, p.options.SetSkip(skip).SetLimit(p.perPage))
@@ -87,10 +87,15 @@ func (p *Pagination) Find(ctx context.Context, results interface{}) (*Paginatior
 		return nil, err
 	}
 
-	np := &Paginatior{
+	lastPage := int64(1)
+	if *count > 0 {
+		lastPage = int64(math.Ceil(float64(*count) / float64(p.perPage)))
+	}
+
+	np := &Paginator{
 		CurrentPage: p.currentPage,
 		PerPage:     p.perPage,
-		LastPage:    int64(math.Ceil(float64(*count) / float64(p.perPage))),
+		LastPage:    lastPage,
 		Total:       *count,
 	}
 

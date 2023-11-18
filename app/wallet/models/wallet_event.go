@@ -53,12 +53,12 @@ func (w *WalletEvent) Add() error {
 	return nil
 }
 
-func (w *WalletEvent) Get(userId string, page *int64, limit *int64) ([]*WalletEvent, *mongodb.Paginatior, error) {
+func (w *WalletEvent) Get(userId string, page *int64, limit *int64) ([]*WalletEvent, *mongodb.Paginator, error) {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
 	var events []*WalletEvent
 
-	paginatior, err := mongodb.NewPagination(coll).
+	paginator, err := mongodb.NewPagination(coll).
 		Where(bson.M{"user_id": userId}).
 		Desc("_id").
 		Page(page).
@@ -68,7 +68,7 @@ func (w *WalletEvent) Get(userId string, page *int64, limit *int64) ([]*WalletEv
 		return nil, nil, err
 	}
 
-	return events, paginatior, nil
+	return events, paginator, nil
 }
 
 func (w *WalletEvent) GetEvents(userId string, eventCursor *string) ([]*WalletEvent, error) {

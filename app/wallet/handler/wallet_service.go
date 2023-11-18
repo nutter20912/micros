@@ -39,7 +39,7 @@ func (s *WalletService) GetEvent(
 
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	events, paginatior, err := new(models.WalletEvent).Get(userId, req.Page, req.Limit)
+	events, paginator, err := new(models.WalletEvent).Get(userId, req.Page, req.Limit)
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -49,7 +49,7 @@ func (s *WalletService) GetEvent(
 	json.Unmarshal(bytes, &data)
 
 	var p *walletV1.Paginator
-	bytes, _ = json.Marshal(paginatior)
+	bytes, _ = json.Marshal(paginator)
 	json.Unmarshal(bytes, &p)
 
 	rsp.Data = data
