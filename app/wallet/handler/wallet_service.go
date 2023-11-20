@@ -37,9 +37,22 @@ func (s *WalletService) GetEvent(
 		return microErrors.BadRequest("222", err.Error())
 	}
 
+	startDate, err := time.Parse(time.RFC3339, req.GetStartDate())
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+	endDate, err := time.Parse(time.RFC3339, req.GetEndDate())
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	events, paginator, err := new(models.WalletEvent).Get(userId, req.Page, req.Limit)
+	events, paginator, err := new(models.WalletEvent).Get(
+		req.Page,
+		req.Limit,
+		models.FilterField("user_id", userId),
+		models.FilterDateRange("time", startDate, endDate))
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}

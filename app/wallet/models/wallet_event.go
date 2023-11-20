@@ -53,13 +53,36 @@ func (w *WalletEvent) Add() error {
 	return nil
 }
 
-func (w *WalletEvent) Get(userId string, page *int64, limit *int64) ([]*WalletEvent, *mongodb.Paginator, error) {
+type FilterOption func(bson.M)
+
+func FilterDateRange(key string, t1 time.Time, t2 time.Time) FilterOption {
+	return func(filters bson.M) {
+		filters[key] = bson.M{"$gt": t1, "$lt": t2}
+	}
+}
+
+func FilterField(key string, val interface{}) FilterOption {
+	return func(filters bson.M) {
+		filters[key] = val
+	}
+}
+
+func (w *WalletEvent) Get(
+	page *int64,
+	limit *int64,
+	filterOptions ...FilterOption,
+) ([]*WalletEvent, *mongodb.Paginator, error) {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
 	var events []*WalletEvent
 
+	filter := bson.M{}
+	for _, o := range filterOptions {
+		o(filter)
+	}
+
 	paginator, err := mongodb.NewPagination(coll).
-		Where(bson.M{"user_id": userId}).
+		Where(filter).
 		Desc("_id").
 		Page(page).
 		Limit(limit).
