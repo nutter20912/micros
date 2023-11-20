@@ -9,6 +9,8 @@ import (
 	"micros/event"
 	walletV1 "micros/proto/wallet/v1"
 
+	mongodb "micros/database/mongo"
+
 	"go-micro.dev/v4"
 	microErrors "go-micro.dev/v4/errors"
 	"go-micro.dev/v4/metadata"
@@ -51,8 +53,8 @@ func (s *WalletService) GetEvent(
 	events, paginator, err := new(models.WalletEvent).Get(
 		req.Page,
 		req.Limit,
-		models.FilterField("user_id", userId),
-		models.FilterDateRange("time", startDate, endDate))
+		mongodb.FilterField("user_id", userId),
+		mongodb.FilterDateRange("time", startDate, endDate))
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}

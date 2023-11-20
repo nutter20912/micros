@@ -9,6 +9,7 @@ import (
 
 	OrderEvent "micros/app/order/event"
 	"micros/app/order/models"
+	"micros/database/mongo"
 	"micros/event"
 	orderV1 "micros/proto/order/v1"
 
@@ -144,6 +145,49 @@ func (s *OrderService) CreateSpotEvent(
 		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
 		Name:    "SpotOrderEvent",
 		Payload: spotOrderEvent})
+
+	return nil
+}
+
+func (s *OrderService) GetSpotEvent(
+	ctx context.Context,
+	req *orderV1.GetSpotEventRequest,
+	rsp *orderV1.GetSpotEventResponse,
+) error {
+	if err := req.Validate(); err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	startDate, err := time.Parse(time.RFC3339, req.GetStartDate())
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+	endDate, err := time.Parse(time.RFC3339, req.GetEndDate())
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	events, paginator, err := new(models.SpotOrderEvent).Get(
+		req.Page,
+		req.Limit,
+		mongo.FilterField("user_id", userId),
+		mongo.FilterDateRange("time", startDate, endDate))
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	var data []*orderV1.SpotOrderEvent
+	bytes, _ := json.Marshal(events)
+	json.Unmarshal(bytes, &data)
+
+	var p *orderV1.Paginator
+	bytes, _ = json.Marshal(paginator)
+	json.Unmarshal(bytes, &p)
+
+	rsp.Data = data
+	rsp.Paginator = p
 
 	return nil
 }

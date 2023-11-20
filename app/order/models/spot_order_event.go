@@ -92,7 +92,33 @@ func (e *SpotOrderEvent) Exist(microId string) (bool, error) {
 	return true, nil
 }
 
-func (e *SpotOrderEvent) Get() (res *SpotOrderEvent, err error) {
+func (e *SpotOrderEvent) Get(
+	page *int64,
+	limit *int64,
+	filterOptions ...mongodb.FilterOption,
+) ([]*SpotOrderEvent, *mongodb.Paginator, error) {
+	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
+
+	var events []*SpotOrderEvent
+	filter := bson.M{}
+	for _, o := range filterOptions {
+		o(filter)
+	}
+
+	paginator, err := mongodb.NewPagination(coll).
+		Where(filter).
+		Desc("_id").
+		Page(page).
+		Limit(limit).
+		Find(context.Background(), &events)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return events, paginator, nil
+}
+
+func (e *SpotOrderEvent) Getc() (res *SpotOrderEvent, err error) {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
 
 	filter := bson.M{"order_id": e.OrderId, "user_id": e.UserId}

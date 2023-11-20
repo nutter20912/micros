@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"math"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	mongoDriver "go.mongodb.org/mongo-driver/mongo"
@@ -111,4 +112,18 @@ func (p *Pagination) count(ctx context.Context) (*int64, error) {
 	}
 
 	return &count, err
+}
+
+type FilterOption func(bson.M)
+
+func FilterDateRange(key string, t1 time.Time, t2 time.Time) FilterOption {
+	return func(filters bson.M) {
+		filters[key] = bson.M{"$gt": t1, "$lt": t2}
+	}
+}
+
+func FilterField(key string, val interface{}) FilterOption {
+	return func(filters bson.M) {
+		filters[key] = val
+	}
 }
