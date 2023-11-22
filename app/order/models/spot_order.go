@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"fmt"
+	mongodb "micros/database/mongo"
 	orderV1 "micros/proto/order/v1"
 	"time"
 
@@ -31,6 +32,32 @@ func (s *SpotOrder) DatabaseName() string {
 
 func (s *SpotOrder) CollectionName() string {
 	return "spot_order_view"
+}
+
+func (e *SpotOrder) Get(
+	page *int64,
+	limit *int64,
+	filterOptions ...mongodb.FilterOption,
+) ([]*SpotOrder, *mongodb.Paginator, error) {
+	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
+
+	var events []*SpotOrder
+	filter := bson.M{}
+	for _, o := range filterOptions {
+		o(filter)
+	}
+
+	paginator, err := mongodb.NewPagination(coll).
+		Where(filter).
+		Desc("_id").
+		Page(page).
+		Limit(limit).
+		Find(context.Background(), &events)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return events, paginator, nil
 }
 
 func (d *SpotOrder) getAggregatePipeline(orderId string) mongo.Pipeline {

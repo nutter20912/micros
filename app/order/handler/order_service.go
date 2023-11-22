@@ -149,10 +149,10 @@ func (s *OrderService) CreateSpotEvent(
 	return nil
 }
 
-func (s *OrderService) GetSpotEvent(
+func (s *OrderService) GetSpot(
 	ctx context.Context,
-	req *orderV1.GetSpotEventRequest,
-	rsp *orderV1.GetSpotEventResponse,
+	req *orderV1.GetSpotRequest,
+	rsp *orderV1.GetSpotResponse,
 ) error {
 	if err := req.Validate(); err != nil {
 		return microErrors.BadRequest("222", err.Error())
@@ -169,16 +169,16 @@ func (s *OrderService) GetSpotEvent(
 
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	events, paginator, err := new(models.SpotOrderEvent).Get(
+	events, paginator, err := new(models.SpotOrder).Get(
 		req.Page,
 		req.Limit,
 		mongo.FilterField("user_id", userId),
-		mongo.FilterDateRange("time", startDate, endDate))
+		mongo.FilterDateRange("created_at", startDate, endDate))
 	if err != nil {
-		return microErrors.BadRequest("222", err.Error())
+		return microErrors.InternalServerError("222", err.Error())
 	}
 
-	var data []*orderV1.SpotOrderEvent
+	var data []*orderV1.SpotOrder
 	bytes, _ := json.Marshal(events)
 	json.Unmarshal(bytes, &data)
 
@@ -188,6 +188,33 @@ func (s *OrderService) GetSpotEvent(
 
 	rsp.Data = data
 	rsp.Paginator = p
+
+	return nil
+}
+
+func (s *OrderService) GetSpotEvent(
+	ctx context.Context,
+	req *orderV1.GetSpotEventRequest,
+	rsp *orderV1.GetSpotEventResponse,
+) error {
+	if err := req.Validate(); err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
+	userId, _ := metadata.Get(ctx, "user_id")
+
+	events, err := new(models.SpotOrderEvent).Get(
+		mongo.FilterField("order_id", req.OrderId),
+		mongo.FilterField("user_id", userId))
+	if err != nil {
+		return microErrors.InternalServerError("222", err.Error())
+	}
+
+	var data []*orderV1.SpotOrderEvent
+	bytes, _ := json.Marshal(events)
+	json.Unmarshal(bytes, &data)
+
+	rsp.Data = data
 
 	return nil
 }

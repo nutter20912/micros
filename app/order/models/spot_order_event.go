@@ -93,29 +93,26 @@ func (e *SpotOrderEvent) Exist(microId string) (bool, error) {
 }
 
 func (e *SpotOrderEvent) Get(
-	page *int64,
-	limit *int64,
 	filterOptions ...mongodb.FilterOption,
-) ([]*SpotOrderEvent, *mongodb.Paginator, error) {
+) ([]SpotOrderEvent, error) {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
 
-	var events []*SpotOrderEvent
 	filter := bson.M{}
 	for _, o := range filterOptions {
 		o(filter)
 	}
 
-	paginator, err := mongodb.NewPagination(coll).
-		Where(filter).
-		Desc("_id").
-		Page(page).
-		Limit(limit).
-		Find(context.Background(), &events)
+	var events []SpotOrderEvent
+	cur, err := coll.Find(context.Background(), filter)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
-	return events, paginator, nil
+	if err := cur.All(context.Background(), &events); err != nil {
+		return nil, err
+	}
+
+	return events, nil
 }
 
 func (e *SpotOrderEvent) Getc() (res *SpotOrderEvent, err error) {
