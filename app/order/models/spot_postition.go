@@ -18,7 +18,7 @@ type SpotPosition struct {
 	Id        primitive.ObjectID `json:"id" bson:"_id,omitempty"`
 	UserId    string             `json:"user_id" bson:"user_id,omitempty"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at,omitempty"`
-	UpdatedAt time.Time          `json:"updated_at" bson:"updated_at,omitempty"`
+	UpdatedAt *time.Time         `json:"updated_at,omitempty" bson:"updated_at,omitempty"`
 
 	Symbol   string            `json:"symbol" bson:"symbol,omitempty"`
 	Side     orderV1.OrderSide `json:"side" bson:"side,omitempty"`
