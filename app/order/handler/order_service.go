@@ -259,10 +259,25 @@ func (s *OrderService) GetSpotPositionClosed(
 		return microErrors.BadRequest("222", err.Error())
 	}
 
+	startDate, err := time.Parse(time.RFC3339, req.GetStartDate())
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+	endDate, err := time.Parse(time.RFC3339, req.GetEndDate())
+	if err != nil {
+		return microErrors.BadRequest("222", err.Error())
+	}
+
 	userId, _ := metadata.Get(ctx, "user_id")
 	symbol := strings.ToUpper(req.GetSymbol())
 
-	spotPositions, paginator, err := new(models.SpotPositionClosed).Get(userId, symbol, req.Page, req.Limit)
+	spotPositions, paginator, err := new(models.SpotPositionClosed).Get(
+		req.Page,
+		req.Limit,
+		mongo.FilterField("user_id", userId),
+		mongo.FilterField("symbol", symbol),
+		mongo.FilterDateRange("created_at", startDate, endDate))
+
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
