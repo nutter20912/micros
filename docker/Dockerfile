@@ -51,8 +51,8 @@ WORKDIR /app
 COPY --from=builder /app/${APP_NAME} ./main
 
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /app/.env .
-COPY --from=builder /app/config ./config
+COPY --from=builder /app/.env.example ./.env
+COPY --from=builder /app/config/${APP_NAME}.yaml ./config/
 COPY --from=builder /app/database/migrations/ ./database/migrations
 
-CMD ["./main"]
+ENTRYPOINT ["./main"]
