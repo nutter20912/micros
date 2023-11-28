@@ -19,19 +19,24 @@ func Options(opts nats.Options) broker.Option {
 	return setBrokerOption(optionsKey{}, opts)
 }
 
-func PublishOptions(opts ...jetstream.PublishOpt) client.PublishOption {
-	return setPublishOptions(publishOptionsKey{}, opts)
-}
-
 // DrainConnection will drain subscription on close.
 func DrainConnection() broker.Option {
 	return setBrokerOption(drainConnectionKey{}, struct{}{})
 }
 
-func StreamConfig(cfg jetstream.StreamConfig) server.SubscriberOption {
+func ConsumerConfig(cfg jetstream.ConsumerConfig) broker.SubscribeOption {
+	return setSubscribeOption(consumerConfigKey{}, cfg)
+}
+
+func PublishOptions(opts ...jetstream.PublishOpt) client.PublishOption {
+	return setPublishOptions(publishOptionsKey{}, opts)
+}
+
+// server.Subscriber
+func SubscriberStreamConfig(cfg jetstream.StreamConfig) server.SubscriberOption {
 	return setSubscriberOption(streamConfigKey{}, cfg)
 }
 
-func ConsumerConfig(cfg jetstream.ConsumerConfig) broker.SubscribeOption {
-	return setSubscribeOption(consumerConfigKey{}, cfg)
+func SubscriberConsumerConfig(cfg jetstream.ConsumerConfig) server.SubscriberOption {
+	return setSubscriberOption(consumerConfigKey{}, cfg)
 }

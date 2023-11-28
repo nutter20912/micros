@@ -2,6 +2,7 @@ package subscriber
 
 import (
 	"micros/event"
+	"micros/queue"
 
 	"go-micro.dev/v4"
 )
@@ -14,7 +15,5 @@ func Register(s micro.Service, e *event.Event) {
 		event.WALLET_BALANCE_CHECKED: walletSub.addSpotOrderEvent,
 	}
 
-	for k, v := range r {
-		micro.RegisterSubscriber(k, s.Server(), v)
-	}
+	queue.RegisterSubscriber(s.Server(), r)
 }

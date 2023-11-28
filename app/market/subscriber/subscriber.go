@@ -2,6 +2,7 @@ package subscriber
 
 import (
 	"micros/event"
+	"micros/queue"
 
 	"go-micro.dev/v4"
 )
@@ -13,7 +14,5 @@ func Register(s micro.Service) {
 		event.ORDER_SPOT_CREATED: orderSub.matchOrder,
 	}
 
-	for k, v := range r {
-		micro.RegisterSubscriber(k, s.Server(), v)
-	}
+	queue.RegisterSubscriber(s.Server(), r)
 }
