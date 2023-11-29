@@ -30,8 +30,7 @@ func Init() {
 			AuthSource: viper.GetString("db.database"),
 			Username:   viper.GetString("db.username"),
 			Password:   viper.GetString("db.password"),
-		}).
-		SetReplicaSet("rs0")
+		})
 
 	var err error
 	if db, err = mongo.Connect(context.Background(), options); err != nil {

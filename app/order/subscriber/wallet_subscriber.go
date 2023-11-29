@@ -114,6 +114,10 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		return err
 	}
 
+	if !msg.Success {
+		return nil
+	}
+
 	s.Event.Dispatch(event.Notify{
 		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
 		Name:    "SpotOrderEvent",
