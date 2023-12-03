@@ -118,7 +118,7 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		return nil
 	}
 
-	s.Event.Dispatch(event.Notify{
+	s.Event.Dispatch(ctx, event.Notify{
 		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
 		Name:    "SpotOrderEvent",
 		Payload: spotOrderEvent})

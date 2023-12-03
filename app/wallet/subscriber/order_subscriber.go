@@ -59,7 +59,7 @@ func (o *orderSubscriber) addEventByDeposit(ctx context.Context, e *orderV1.Depo
 		msg.Type = walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT
 	}
 
-	o.Event.Dispatch(walletEvent.TransactionEvent{Payload: msg})
+	o.Event.Dispatch(ctx, walletEvent.TransactionEvent{Payload: msg})
 
 	return nil
 }
@@ -83,7 +83,7 @@ func (o *orderSubscriber) checkBalance(ctx context.Context, e *marketV1.OrderMat
 		msg.Memo = "balancce not enough"
 	}
 
-	o.Event.Dispatch(walletEvent.BalanceChecked{Payload: msg})
+	o.Event.Dispatch(ctx, walletEvent.BalanceChecked{Payload: msg})
 
 	return nil
 }

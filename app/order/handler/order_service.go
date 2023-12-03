@@ -54,7 +54,7 @@ func (s *OrderService) CreateDepositEvent(
 		Amount:  depositOrderEvent.Amount,
 	}
 
-	if err := s.Event.Dispatch(OrderEvent.DepositOrderCreated{Payload: rsp.Data}); err != nil {
+	if err := s.Event.Dispatch(ctx, OrderEvent.DepositOrderCreated{Payload: rsp.Data}); err != nil {
 		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
 	}
 
@@ -137,11 +137,11 @@ func (s *OrderService) CreateSpotEvent(
 
 	rsp.Data = data
 
-	if err := s.Event.Dispatch(OrderEvent.SpotOrderCreated{Payload: rsp.Data}); err != nil {
+	if err := s.Event.Dispatch(ctx, OrderEvent.SpotOrderCreated{Payload: rsp.Data}); err != nil {
 		return microErrors.InternalServerError("123", "Dispatch error: %v", err)
 	}
 
-	s.Event.Dispatch(event.Notify{
+	s.Event.Dispatch(ctx, event.Notify{
 		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
 		Name:    "SpotOrderEvent",
 		Payload: spotOrderEvent})

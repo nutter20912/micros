@@ -52,7 +52,7 @@ func (g *UserService) Register(
 		return microErrors.InternalServerError("123", result.Error.Error())
 	}
 
-	if err := g.event.Dispatch(UserEvent.UserCreated{Payload: fmt.Sprint(user.ID)}); err != nil {
+	if err := g.event.Dispatch(ctx, UserEvent.UserCreated{Payload: fmt.Sprint(user.ID)}); err != nil {
 		fmt.Println(err)
 	}
 

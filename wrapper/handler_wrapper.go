@@ -3,8 +3,8 @@ package wrapper
 import (
 	"context"
 	"errors"
-	"log"
 	"micros/auth"
+	"micros/logging"
 
 	baseAuth "go-micro.dev/v4/auth"
 	microErrors "go-micro.dev/v4/errors"
@@ -15,17 +15,9 @@ import (
 func NewRequestWrapper() server.HandlerWrapper {
 	return func(fn server.HandlerFunc) server.HandlerFunc {
 		return func(ctx context.Context, req server.Request, rsp interface{}) error {
-			l := make(map[string]interface{})
-
 			err := fn(ctx, req, rsp)
 
-			l["request"] = req.Method()
-
-			if err != nil {
-				l["error"] = err.Error()
-			}
-
-			log.Printf("[request_log]:  %v", l)
+			logging.RequestLog(ctx, req, rsp, err)
 
 			return err
 		}

@@ -2,7 +2,6 @@ package event
 
 import (
 	"context"
-	"fmt"
 	"micros/event"
 	marketV1 "micros/proto/market/v1"
 	walletV1 "micros/proto/wallet/v1"
@@ -12,25 +11,22 @@ import (
 )
 
 type PriceChanged struct {
-	Client client.Client
+	Client  client.Client
+	Payload *walletV1.TransactionEventMessage
 }
 
-func (e PriceChanged) Dispatch(msg *walletV1.TransactionEventMessage) {
-	pub := micro.NewEvent(event.MARKET_PRICE_CHANGED, e.Client)
+func (e PriceChanged) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.MARKET_PRICE_CHANGED, c)
 
-	if err := pub.Publish(context.Background(), msg); err != nil {
-		fmt.Printf("error publishing: %v", err)
-	}
+	return pub.Publish(ctx, e.Payload)
 }
 
 type OrderMatched struct {
-	Client client.Client
+	Payload *marketV1.OrderMatchedEventMessage
 }
 
-func (e OrderMatched) Dispatch(msg *marketV1.OrderMatchedEventMessage) {
-	pub := micro.NewEvent(event.MARKET_MATCHED, e.Client)
+func (e OrderMatched) Publish(ctx context.Context, c client.Client) error {
+	pub := micro.NewEvent(event.MARKET_MATCHED, c)
 
-	if err := pub.Publish(context.Background(), msg); err != nil {
-		fmt.Printf("error publishing: %v", err)
-	}
+	return pub.Publish(ctx, e.Payload)
 }

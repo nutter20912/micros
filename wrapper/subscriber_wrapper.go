@@ -2,7 +2,7 @@ package wrapper
 
 import (
 	"context"
-	"log"
+	"micros/logging"
 	"micros/queue"
 
 	"go-micro.dev/v4/server"
@@ -15,8 +15,7 @@ func LogSubWrapper() server.SubscriberWrapper {
 				return queue.ErrReportOrIgnore(err)
 			}
 
-			log.Printf("[sub_log] topic: %v", msg.Topic())
-			log.Printf("[sub_log] payload: %v", msg.Payload())
+			logging.EventLog(ctx, msg)
 
 			if err := fn(ctx, msg); err != nil {
 				return queue.ErrReportOrIgnore(err)

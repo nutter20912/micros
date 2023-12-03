@@ -3,8 +3,9 @@ package subscriber
 import (
 	"context"
 	"fmt"
-	"micros/app/market/event"
+	marketEvent "micros/app/market/event"
 	"micros/database/redis"
+	"micros/event"
 	marketV1 "micros/proto/market/v1"
 	orderV1 "micros/proto/order/v1"
 	"strconv"
@@ -14,6 +15,8 @@ import (
 
 type orderSubscriber struct {
 	Service micro.Service
+
+	Event *event.Event
 }
 
 // 搓合
@@ -38,6 +41,5 @@ func (s *orderSubscriber) matchOrder(ctx context.Context, e *orderV1.SpotCreated
 		Quantity: e.Data.Quantity,
 	}
 
-	event.OrderMatched{Client: s.Service.Client()}.Dispatch(msg)
-	return nil
+	return s.Event.Dispatch(ctx, marketEvent.OrderMatched{Payload: msg})
 }

@@ -24,7 +24,7 @@ func (e TransactionEvent) Publish(ctx context.Context, c client.Client) error {
 		return fmt.Errorf("error Marshal: %v", err)
 	}
 
-	return pub.Publish(context.Background(), b)
+	return pub.Publish(ctx, b)
 }
 
 type BalanceChecked struct {
@@ -34,5 +34,5 @@ type BalanceChecked struct {
 func (e BalanceChecked) Publish(ctx context.Context, c client.Client) error {
 	pub := micro.NewEvent(event.WALLET_BALANCE_CHECKED, c)
 
-	return pub.Publish(context.Background(), e.Payload)
+	return pub.Publish(ctx, e.Payload)
 }

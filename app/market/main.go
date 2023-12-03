@@ -48,7 +48,7 @@ func main() {
 		service.Server(),
 		handler.NewMarketService(service, e))
 
-	subscriber.Register(service)
+	subscriber.Register(service, e)
 
 	go tasks.ExecuteAll(service)
 
