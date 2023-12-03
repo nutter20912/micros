@@ -35,11 +35,11 @@ func (d *DepositOrder) CollectionName() string {
 	return depositOrderViewCollectionName
 }
 
-func (d *DepositOrder) Get(orderId string) (*DepositOrder, error) {
+func (d *DepositOrder) Get(ctx context.Context, orderId string) (*DepositOrder, error) {
 	coll := mongodb.Get().Database(d.DatabaseName()).Collection(d.CollectionName())
 
 	var order *DepositOrder
-	if err := coll.FindOne(context.Background(), bson.M{"id": orderId}).Decode(&order); err != nil {
+	if err := coll.FindOne(ctx, bson.M{"id": orderId}).Decode(&order); err != nil {
 		return nil, err
 	}
 

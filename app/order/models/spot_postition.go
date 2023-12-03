@@ -38,7 +38,7 @@ func (s *SpotPosition) CollectionName() string {
 	return "spot_position"
 }
 
-func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int64) ([]*SpotPosition, *mongodb.Paginator, error) {
+func (s *SpotPosition) Get(ctx context.Context, userId string, symbol string, page *int64, limit *int64) ([]*SpotPosition, *mongodb.Paginator, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
@@ -54,7 +54,7 @@ func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int
 		Desc("_id").
 		Page(page).
 		Limit(limit).
-		Find(context.Background(), &data)
+		Find(ctx, &data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -62,7 +62,7 @@ func (s *SpotPosition) Get(userId string, symbol string, page *int64, limit *int
 	return data, paginator, nil
 }
 
-func (s *SpotPosition) GetList(userId string, symbol string) ([]*SpotPosition, error) {
+func (s *SpotPosition) GetList(ctx context.Context, userId string, symbol string) ([]*SpotPosition, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
@@ -74,12 +74,12 @@ func (s *SpotPosition) GetList(userId string, symbol string) ([]*SpotPosition, e
 	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}})
 
 	var data []*SpotPosition
-	cur, err := coll.Find(context.Background(), filter, opts)
+	cur, err := coll.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = cur.All(context.Background(), &data); err != nil {
+	if err = cur.All(ctx, &data); err != nil {
 		return nil, err
 	}
 
@@ -88,7 +88,7 @@ func (s *SpotPosition) GetList(userId string, symbol string) ([]*SpotPosition, e
 	return data, nil
 }
 
-func (s *SpotPosition) Upsert() error {
+func (s *SpotPosition) Upsert(ctx context.Context) error {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
@@ -105,18 +105,18 @@ func (s *SpotPosition) Upsert() error {
 
 	// 撈庫存
 	var positions []*SpotPosition
-	cur, err := coll.Find(context.Background(), filter)
+	cur, err := coll.Find(ctx, filter)
 	if err != nil {
 		return err
 	}
 
-	if err = cur.All(context.Background(), &positions); err != nil {
+	if err = cur.All(ctx, &positions); err != nil {
 		return err
 	}
 
 	//建倉
 	if errors.Is(mongo.ErrNoDocuments, err) {
-		if err := s.Add(); err != nil {
+		if err := s.Add(ctx); err != nil {
 			return err
 		}
 
@@ -124,45 +124,45 @@ func (s *SpotPosition) Upsert() error {
 	}
 
 	//平倉
-	s.close(positions)
+	s.close(ctx, positions)
 
 	if s.Quantity > 0 {
-		s.Add()
+		s.Add(ctx)
 		return nil
 	}
 
 	return err
 }
 
-func (s *SpotPosition) close(positions []*SpotPosition) {
+func (s *SpotPosition) close(ctx context.Context, positions []*SpotPosition) {
 	for _, position := range positions {
 		switch {
 		//完全平倉
 		case position.OpenQuantity < s.Quantity:
 			s.Quantity -= position.OpenQuantity
 
-			position.CloseEvent(s, position.OpenQuantity)
-			position.UpdateOpenQuantity(0)
+			position.CloseEvent(ctx, s, position.OpenQuantity)
+			position.UpdateOpenQuantity(ctx, 0)
 
 		//部分平倉
 		case position.OpenQuantity > s.Quantity:
-			position.CloseEvent(s, s.Quantity)
-			position.UpdateOpenQuantity(position.OpenQuantity - s.Quantity)
+			position.CloseEvent(ctx, s, s.Quantity)
+			position.UpdateOpenQuantity(ctx, position.OpenQuantity-s.Quantity)
 
 			s.Quantity = 0
 			return
 
 		//相等
 		default:
-			position.CloseEvent(s, s.Quantity)
-			position.UpdateOpenQuantity(0)
+			position.CloseEvent(ctx, s, s.Quantity)
+			position.UpdateOpenQuantity(ctx, 0)
 			s.Quantity = 0
 			return
 		}
 	}
 }
 
-func (s *SpotPosition) Add() error {
+func (s *SpotPosition) Add(ctx context.Context) error {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	id := primitive.NewObjectID()
@@ -170,13 +170,13 @@ func (s *SpotPosition) Add() error {
 	s.CreatedAt = id.Timestamp()
 	s.OpenQuantity = s.Quantity
 
-	if _, err := coll.InsertOne(context.Background(), s); err != nil {
+	if _, err := coll.InsertOne(ctx, s); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *SpotPosition) UpdateOpenQuantity(openQuantity float64) error {
+func (s *SpotPosition) UpdateOpenQuantity(ctx context.Context, openQuantity float64) error {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{"_id": s.Id}
@@ -187,7 +187,7 @@ func (s *SpotPosition) UpdateOpenQuantity(openQuantity float64) error {
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 
-	if err := coll.FindOneAndUpdate(context.Background(), filter, update, opts).Decode(&s); err != nil {
+	if err := coll.FindOneAndUpdate(ctx, filter, update, opts).Decode(&s); err != nil {
 		fmt.Println(err)
 		return err
 	}
@@ -195,7 +195,7 @@ func (s *SpotPosition) UpdateOpenQuantity(openQuantity float64) error {
 	return nil
 }
 
-func (s *SpotPosition) CloseEvent(incoming *SpotPosition, closeQty float64) {
+func (s *SpotPosition) CloseEvent(ctx context.Context, incoming *SpotPosition, closeQty float64) {
 	spc := SpotPositionClosed{
 		UserId:   s.UserId,
 		Symbol:   s.Symbol,
@@ -211,7 +211,7 @@ func (s *SpotPosition) CloseEvent(incoming *SpotPosition, closeQty float64) {
 		CloseFee:     incoming.Fee,
 	}
 
-	if err := spc.Add(); err != nil {
+	if err := spc.Add(ctx); err != nil {
 		fmt.Println(err)
 	}
 }

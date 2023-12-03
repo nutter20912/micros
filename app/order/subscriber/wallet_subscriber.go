@@ -44,11 +44,11 @@ func (s *walletSubscriber) addDepositOrderEvent(
 	microId string,
 	msg *walletV1.TransactionEventMessage,
 ) error {
-	if err := queue.CheckMsgId(new(models.DepositOrderEvent), microId); err != nil {
+	if err := queue.CheckMsgId(ctx, new(models.DepositOrderEvent), microId); err != nil {
 		return err
 	}
 
-	depositOrder, err := new(models.DepositOrder).Get(msg.OrderId)
+	depositOrder, err := new(models.DepositOrder).Get(ctx, msg.OrderId)
 	if err != nil {
 		return errors.New("deposit_order not found")
 	}
@@ -67,7 +67,7 @@ func (s *walletSubscriber) addDepositOrderEvent(
 		Memo:    msg.Memo,
 	}
 
-	new(models.DepositOrderEvent).Add(event)
+	new(models.DepositOrderEvent).Add(ctx, event)
 
 	return nil
 }
@@ -81,13 +81,13 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		return err
 	}
 
-	if err := queue.CheckMsgId(new(models.SpotOrderEvent), microId); err != nil {
+	if err := queue.CheckMsgId(ctx, new(models.SpotOrderEvent), microId); err != nil {
 		return err
 	}
 
 	spotOrderEvent := models.SpotOrderEvent{OrderId: msg.OrderId}
 
-	count, err := spotOrderEvent.Count()
+	count, err := spotOrderEvent.Count(ctx)
 	if err != nil {
 		return err
 	}
@@ -96,7 +96,7 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		return queue.ErrMessageConflicted
 	}
 
-	if err := spotOrderEvent.Last(); err != nil {
+	if err := spotOrderEvent.Last(ctx); err != nil {
 		return err
 	}
 
@@ -110,7 +110,7 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		spotOrderEvent.Memo = msg.Memo
 	}
 
-	if err := spotOrderEvent.Add(); err != nil {
+	if err := spotOrderEvent.Add(ctx); err != nil {
 		return err
 	}
 
@@ -132,7 +132,7 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		Quantity: spotOrderEvent.Quantity,
 	}
 
-	p.Upsert()
+	p.Upsert(ctx)
 
 	return nil
 }

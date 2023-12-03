@@ -36,7 +36,7 @@ func (d *DepositOrderEvent) CollectionName() string {
 	return depositOrderEventCollectionName
 }
 
-func (d *DepositOrderEvent) Create(userId string, amount float64) (event *DepositOrderEvent, err error) {
+func (d *DepositOrderEvent) Create(ctx context.Context, userId string, amount float64) (event *DepositOrderEvent, err error) {
 	orderId := ulid.Make().String()
 
 	event = &DepositOrderEvent{
@@ -46,7 +46,7 @@ func (d *DepositOrderEvent) Create(userId string, amount float64) (event *Deposi
 		Amount:  amount,
 	}
 
-	if event, err = d.Add(event); err != nil {
+	if event, err = d.Add(ctx, event); err != nil {
 		return nil, err
 	}
 
@@ -54,6 +54,7 @@ func (d *DepositOrderEvent) Create(userId string, amount float64) (event *Deposi
 }
 
 func (d *DepositOrderEvent) Add(
+	ctx context.Context,
 	event *DepositOrderEvent,
 ) (*DepositOrderEvent, error) {
 	coll := mongodb.Get().Database(d.DatabaseName()).Collection(d.CollectionName())
@@ -62,27 +63,27 @@ func (d *DepositOrderEvent) Add(
 	event.Id = id
 	event.Time = id.Timestamp()
 
-	if _, err := coll.InsertOne(context.Background(), event); err != nil {
+	if _, err := coll.InsertOne(ctx, event); err != nil {
 		return nil, err
 	}
 
-	if err := new(DepositOrder).Update(context.Background(), coll, event.OrderId); err != nil {
+	if err := new(DepositOrder).Update(ctx, coll, event.OrderId); err != nil {
 		log.Printf("[deposit order err]: %v", err.Error())
 	}
 
 	return event, nil
 }
 
-func (d *DepositOrderEvent) Get(orderId string) ([]*DepositOrderEvent, error) {
+func (d *DepositOrderEvent) Get(ctx context.Context, orderId string) ([]*DepositOrderEvent, error) {
 	coll := mongodb.Get().Database(d.DatabaseName()).Collection(d.CollectionName())
 
 	var events []*DepositOrderEvent
-	cur, err := coll.Find(context.Background(), bson.M{"order_id": orderId})
+	cur, err := coll.Find(ctx, bson.M{"order_id": orderId})
 	if err != nil {
 		return nil, err
 	}
 
-	if err = cur.All(context.Background(), &events); err != nil {
+	if err = cur.All(ctx, &events); err != nil {
 		return nil, err
 	}
 
@@ -91,10 +92,10 @@ func (d *DepositOrderEvent) Get(orderId string) ([]*DepositOrderEvent, error) {
 	return events, nil
 }
 
-func (d *DepositOrderEvent) Exist(microId string) (bool, error) {
+func (d *DepositOrderEvent) Exist(ctx context.Context, microId string) (bool, error) {
 	coll := mongodb.Get().Database(d.DatabaseName()).Collection(d.CollectionName())
 
-	count, err := coll.CountDocuments(context.Background(), bson.M{"msg_id": microId})
+	count, err := coll.CountDocuments(ctx, bson.M{"msg_id": microId})
 	if err != nil {
 		return false, err
 	}

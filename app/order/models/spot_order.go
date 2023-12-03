@@ -35,6 +35,7 @@ func (s *SpotOrder) CollectionName() string {
 }
 
 func (e *SpotOrder) Get(
+	ctx context.Context,
 	page *int64,
 	limit *int64,
 	filterOptions ...mongodb.FilterOption,
@@ -52,7 +53,7 @@ func (e *SpotOrder) Get(
 		Desc("_id").
 		Page(page).
 		Limit(limit).
-		Find(context.Background(), &events)
+		Find(ctx, &events)
 	if err != nil {
 		return nil, nil, err
 	}

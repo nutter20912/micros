@@ -31,11 +31,11 @@ func (w *Wallet) CollectionName() string {
 	return walletViewCollectionName
 }
 
-func (w *Wallet) Get(userId string) (*Wallet, error) {
+func (w *Wallet) Get(ctx context.Context, userId string) (*Wallet, error) {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
 	var wallet Wallet
-	if err := coll.FindOne(context.Background(), bson.M{"_id": userId}).Decode(&wallet); err != nil {
+	if err := coll.FindOne(ctx, bson.M{"_id": userId}).Decode(&wallet); err != nil {
 		return nil, err
 	}
 

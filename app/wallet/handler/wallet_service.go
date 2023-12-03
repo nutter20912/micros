@@ -51,6 +51,7 @@ func (s *WalletService) GetEvent(
 	userId, _ := metadata.Get(ctx, "user_id")
 
 	events, paginator, err := new(models.WalletEvent).Get(
+		ctx,
 		req.Page,
 		req.Limit,
 		mongodb.FilterField("user_id", userId),
@@ -80,7 +81,7 @@ func (s *WalletService) Get(
 ) error {
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	wallet, err := new(models.Wallet).Get(userId)
+	wallet, err := new(models.Wallet).Get(ctx, userId)
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -112,7 +113,7 @@ func (s *WalletService) GetWalletStream(
 		default:
 			time.Sleep(time.Second)
 
-			wallet, err := new(models.Wallet).Get(userId)
+			wallet, err := new(models.Wallet).Get(ctx, userId)
 			if err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}
@@ -120,7 +121,7 @@ func (s *WalletService) GetWalletStream(
 			infoBytes, _ := json.Marshal(wallet)
 			json.Unmarshal(infoBytes, &info)
 
-			walletEvents, err := new(models.WalletEvent).GetEvents(userId, eventCursor)
+			walletEvents, err := new(models.WalletEvent).GetEvents(ctx, userId, eventCursor)
 			if err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}

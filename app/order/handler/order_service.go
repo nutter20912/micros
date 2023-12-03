@@ -41,7 +41,7 @@ func (s *OrderService) CreateDepositEvent(
 
 	userId, _ := metadata.Get(ctx, "user_id")
 
-	depositOrderEvent, err := new(models.DepositOrderEvent).Create(userId, req.GetAmount())
+	depositOrderEvent, err := new(models.DepositOrderEvent).Create(ctx, userId, req.GetAmount())
 	if err != nil {
 		return microErrors.BadRequest("123", "create fail")
 	}
@@ -66,7 +66,7 @@ func (s *OrderService) GetDepositEvent(
 	req *orderV1.GetDepositEventRequest,
 	rsp *orderV1.GetDepositEventResponse,
 ) error {
-	events, err := new(models.DepositOrderEvent).Get(req.GetOrderId())
+	events, err := new(models.DepositOrderEvent).Get(ctx, req.GetOrderId())
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -85,7 +85,7 @@ func (s *OrderService) GetDeposit(
 	req *orderV1.GetDepositRequest,
 	rsp *orderV1.GetDepositResponse,
 ) error {
-	order, err := new(models.DepositOrder).Get(req.GetId())
+	order, err := new(models.DepositOrder).Get(ctx, req.GetId())
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -127,7 +127,7 @@ func (s *OrderService) CreateSpotEvent(
 		spotOrderEvent.Price = *req.Price
 	}
 
-	if err := spotOrderEvent.Create(); err != nil {
+	if err := spotOrderEvent.Create(ctx); err != nil {
 		return microErrors.BadRequest("123", "create fail")
 	}
 
@@ -170,6 +170,7 @@ func (s *OrderService) GetSpot(
 	userId, _ := metadata.Get(ctx, "user_id")
 
 	events, paginator, err := new(models.SpotOrder).Get(
+		ctx,
 		req.Page,
 		req.Limit,
 		mongo.FilterField("user_id", userId),
@@ -204,6 +205,7 @@ func (s *OrderService) GetSpotEvent(
 	userId, _ := metadata.Get(ctx, "user_id")
 
 	events, err := new(models.SpotOrderEvent).Get(
+		ctx,
 		mongo.FilterField("order_id", req.OrderId),
 		mongo.FilterField("user_id", userId))
 	if err != nil {
@@ -231,7 +233,7 @@ func (s *OrderService) GetSpotPosition(
 	userId, _ := metadata.Get(ctx, "user_id")
 	symbol := strings.ToUpper(req.GetSymbol())
 
-	spotPositions, paginator, err := new(models.SpotPosition).Get(userId, symbol, req.Page, req.Limit)
+	spotPositions, paginator, err := new(models.SpotPosition).Get(ctx, userId, symbol, req.Page, req.Limit)
 	if err != nil {
 		return microErrors.BadRequest("222", err.Error())
 	}
@@ -272,6 +274,7 @@ func (s *OrderService) GetSpotPositionClosed(
 	symbol := strings.ToUpper(req.GetSymbol())
 
 	spotPositions, paginator, err := new(models.SpotPositionClosed).Get(
+		ctx,
 		req.Page,
 		req.Limit,
 		mongo.FilterField("user_id", userId),
@@ -318,7 +321,7 @@ func (s *OrderService) GetPositionStream(
 			time.Sleep(time.Second)
 
 			var sp models.SpotPosition
-			spotPositions, err := sp.GetList(userId, symbol)
+			spotPositions, err := sp.GetList(ctx, userId, symbol)
 			if err != nil {
 				return status.Error(codes.Internal, err.Error())
 			}

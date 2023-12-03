@@ -38,49 +38,49 @@ func (d *SpotOrderEvent) CollectionName() string {
 	return "spot_order_event"
 }
 
-func (e *SpotOrderEvent) Create() error {
+func (e *SpotOrderEvent) Create(ctx context.Context) error {
 	e.OrderId = ulid.Make().String()
 
-	if err := e.Add(); err != nil {
+	if err := e.Add(ctx); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (e *SpotOrderEvent) Add() error {
+func (e *SpotOrderEvent) Add(ctx context.Context) error {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
 
 	id := primitive.NewObjectID()
 	e.Id = id
 	e.Time = id.Timestamp()
 
-	if _, err := coll.InsertOne(context.Background(), e); err != nil {
+	if _, err := coll.InsertOne(ctx, e); err != nil {
 		return err
 	}
 
-	if err := new(SpotOrder).Update(context.Background(), coll, e.OrderId); err != nil {
+	if err := new(SpotOrder).Update(ctx, coll, e.OrderId); err != nil {
 		log.Printf("[deposit order err]: %v", err.Error())
 	}
 
 	return nil
 }
 
-func (e *SpotOrderEvent) Last() error {
+func (e *SpotOrderEvent) Last(ctx context.Context) error {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
 
 	opts := options.FindOne().SetSort(bson.M{"time": -1})
-	if err := coll.FindOne(context.Background(), bson.M{"order_id": e.OrderId}, opts).Decode(e); err != nil {
+	if err := coll.FindOne(ctx, bson.M{"order_id": e.OrderId}, opts).Decode(e); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (e *SpotOrderEvent) Exist(microId string) (bool, error) {
+func (e *SpotOrderEvent) Exist(ctx context.Context, microId string) (bool, error) {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
 
-	count, err := coll.CountDocuments(context.Background(), bson.M{"msg_id": microId})
+	count, err := coll.CountDocuments(ctx, bson.M{"msg_id": microId})
 	if err != nil {
 		return false, err
 	}
@@ -93,6 +93,7 @@ func (e *SpotOrderEvent) Exist(microId string) (bool, error) {
 }
 
 func (e *SpotOrderEvent) Get(
+	ctx context.Context,
 	filterOptions ...mongodb.FilterOption,
 ) ([]SpotOrderEvent, error) {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
@@ -103,19 +104,19 @@ func (e *SpotOrderEvent) Get(
 	}
 
 	var events []SpotOrderEvent
-	cur, err := coll.Find(context.Background(), filter)
+	cur, err := coll.Find(ctx, filter)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := cur.All(context.Background(), &events); err != nil {
+	if err := cur.All(ctx, &events); err != nil {
 		return nil, err
 	}
 
 	return events, nil
 }
 
-func (e *SpotOrderEvent) Count() (int64, error) {
+func (e *SpotOrderEvent) Count(ctx context.Context) (int64, error) {
 	coll := mongodb.Get().Database(e.DatabaseName()).Collection(e.CollectionName())
 
 	filter := bson.M{}
@@ -124,7 +125,7 @@ func (e *SpotOrderEvent) Count() (int64, error) {
 		filter["order_id"] = e.OrderId
 	}
 
-	count, err := coll.CountDocuments(context.Background(), filter)
+	count, err := coll.CountDocuments(ctx, filter)
 	if err != nil {
 		return 0, err
 	}

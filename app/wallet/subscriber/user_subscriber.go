@@ -21,7 +21,7 @@ func (s *userSubscriber) initWalletEvent(ctx context.Context, event *userV1.Regi
 		return err
 	}
 
-	if err := queue.CheckMsgId(new(models.WalletEvent), microId); err != nil {
+	if err := queue.CheckMsgId(ctx, new(models.WalletEvent), microId); err != nil {
 		return err
 	}
 
@@ -32,7 +32,7 @@ func (s *userSubscriber) initWalletEvent(ctx context.Context, event *userV1.Regi
 		Change: 0,
 		Memo:   "init"}
 
-	if err := newWalletEvent.Add(); err != nil {
+	if err := newWalletEvent.Add(ctx); err != nil {
 		return errors.New("add wallet_event error")
 	}
 

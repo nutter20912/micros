@@ -31,7 +31,7 @@ func main() {
 	appName := viper.GetString("app.name")
 	appPort := viper.GetString("app.port")
 	service := micro.NewService()
-	otelShutdown, err := otel.SetupOTelSDK(context.Background(), appName, "0.1.0")
+	otelShutdown, err := otel.SetupGlobalOTelSDK(context.Background(), appName, "0.1.0")
 	if err != nil {
 		logger.Error(err)
 	}

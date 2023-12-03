@@ -26,7 +26,7 @@ func (o *orderSubscriber) addEventByDeposit(ctx context.Context, e *orderV1.Depo
 		return err
 	}
 
-	if err := queue.CheckMsgId(new(models.WalletEvent), microId); err != nil {
+	if err := queue.CheckMsgId(ctx, new(models.WalletEvent), microId); err != nil {
 		return err
 	}
 
@@ -39,11 +39,11 @@ func (o *orderSubscriber) addEventByDeposit(ctx context.Context, e *orderV1.Depo
 		Type:    walletV1.WalletEventType_WALLET_EVENT_TYPE_DEPOSIT}
 
 	err = func() error {
-		if _, err := new(models.Wallet).Get(newEvent.UserId); err != nil {
+		if _, err := new(models.Wallet).Get(ctx, newEvent.UserId); err != nil {
 			return fmt.Errorf("wallet not found: %v", err)
 		}
 
-		if err := newEvent.Add(); err != nil {
+		if err := newEvent.Add(ctx); err != nil {
 			return fmt.Errorf("add wallet_event error: %v", err)
 		}
 
@@ -73,7 +73,7 @@ func (o *orderSubscriber) checkBalance(ctx context.Context, e *marketV1.OrderMat
 		Quantity: e.Quantity,
 		Success:  true}
 
-	wallet, err := new(models.Wallet).Get(e.UserId)
+	wallet, err := new(models.Wallet).Get(ctx, e.UserId)
 	if err != nil {
 		return fmt.Errorf("wallet not found: %v", err)
 	}

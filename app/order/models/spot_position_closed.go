@@ -38,20 +38,21 @@ func (s *SpotPositionClosed) CollectionName() string {
 	return "spot_position_closed"
 }
 
-func (s *SpotPositionClosed) Add() error {
+func (s *SpotPositionClosed) Add(ctx context.Context) error {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	id := primitive.NewObjectID()
 	s.Id = id
 	s.CreatedAt = id.Timestamp()
 
-	if _, err := coll.InsertOne(context.Background(), s); err != nil {
+	if _, err := coll.InsertOne(ctx, s); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *SpotPositionClosed) Get(
+	ctx context.Context,
 	page *int64,
 	limit *int64,
 	filterOptions ...mongodb.FilterOption,
@@ -70,7 +71,7 @@ func (s *SpotPositionClosed) Get(
 		Desc("_id").
 		Page(page).
 		Limit(limit).
-		Find(context.Background(), &data)
+		Find(ctx, &data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -78,7 +79,7 @@ func (s *SpotPositionClosed) Get(
 	return data, paginator, nil
 }
 
-func (s *SpotPositionClosed) GetList(userId string) ([]*SpotPositionClosed, error) {
+func (s *SpotPositionClosed) GetList(ctx context.Context, userId string) ([]*SpotPositionClosed, error) {
 	coll := mongodb.Get().Database(s.DatabaseName()).Collection(s.CollectionName())
 
 	filter := bson.M{
@@ -88,12 +89,12 @@ func (s *SpotPositionClosed) GetList(userId string) ([]*SpotPositionClosed, erro
 
 	var data []*SpotPositionClosed
 	opts := options.Find().SetSort(bson.D{{Key: "_id", Value: -1}})
-	cur, err := coll.Find(context.Background(), filter, opts)
+	cur, err := coll.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	if err = cur.All(context.Background(), &data); err != nil {
+	if err = cur.All(ctx, &data); err != nil {
 		return nil, err
 	}
 

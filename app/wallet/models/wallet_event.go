@@ -36,17 +36,17 @@ func (w *WalletEvent) CollectionName() string {
 	return walletEventCollectionName
 }
 
-func (w *WalletEvent) Add() error {
+func (w *WalletEvent) Add(ctx context.Context) error {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
 	w.Id = primitive.NewObjectID()
 	w.Time = time.Now()
 
-	if _, err := coll.InsertOne(context.Background(), w); err != nil {
+	if _, err := coll.InsertOne(ctx, w); err != nil {
 		return err
 	}
 
-	if err := new(Wallet).Update(context.Background(), coll, w.UserId); err != nil {
+	if err := new(Wallet).Update(ctx, coll, w.UserId); err != nil {
 		log.Printf("[wallet err]: %v", err.Error())
 	}
 
@@ -54,6 +54,7 @@ func (w *WalletEvent) Add() error {
 }
 
 func (w *WalletEvent) Get(
+	ctx context.Context,
 	page *int64,
 	limit *int64,
 	filterOptions ...mongodb.FilterOption,
@@ -72,7 +73,7 @@ func (w *WalletEvent) Get(
 		Desc("_id").
 		Page(page).
 		Limit(limit).
-		Find(context.Background(), &events)
+		Find(ctx, &events)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -80,7 +81,7 @@ func (w *WalletEvent) Get(
 	return events, paginator, nil
 }
 
-func (w *WalletEvent) GetEvents(userId string, eventCursor *string) ([]*WalletEvent, error) {
+func (w *WalletEvent) GetEvents(ctx context.Context, userId string, eventCursor *string) ([]*WalletEvent, error) {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
 	var events []*WalletEvent
@@ -99,22 +100,22 @@ func (w *WalletEvent) GetEvents(userId string, eventCursor *string) ([]*WalletEv
 		opts.SetLimit(1)
 	}
 
-	cur, err := coll.Find(context.Background(), filter, opts)
+	cur, err := coll.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := cur.All(context.Background(), &events); err != nil {
+	if err := cur.All(ctx, &events); err != nil {
 		return nil, err
 	}
 
 	return events, nil
 }
 
-func (w *WalletEvent) Exist(msgId string) (bool, error) {
+func (w *WalletEvent) Exist(ctx context.Context, msgId string) (bool, error) {
 	coll := mongodb.Get().Database(w.DatabaseName()).Collection(w.CollectionName())
 
-	count, err := coll.CountDocuments(context.Background(), bson.M{"msg_id": msgId})
+	count, err := coll.CountDocuments(ctx, bson.M{"msg_id": msgId})
 	if err != nil {
 		return false, err
 	}
