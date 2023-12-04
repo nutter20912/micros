@@ -12,7 +12,7 @@ type logWrapper struct {
 }
 
 func (l *logWrapper) Publish(ctx context.Context, p client.Message, opts ...client.PublishOption) error {
-	logging.PublishLog(ctx, p)
+	logging.PublishLog(ctx, l, p)
 
 	return l.Client.Publish(ctx, p, opts...)
 }

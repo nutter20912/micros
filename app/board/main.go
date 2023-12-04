@@ -47,15 +47,18 @@ func main() {
 			return otelShutdown(context.Background())
 		}),
 
-		micro.WrapClient(opentelemetry.NewClientWrapper()),
-		micro.WrapClient(wrapper.NewClientWrapper),
+		micro.WrapClient(
+			opentelemetry.NewClientWrapper(),
+			wrapper.NewClientWrapper),
 
-		micro.WrapHandler(opentelemetry.NewHandlerWrapper()),
-		micro.WrapHandler(wrapper.NewRequestWrapper()),
-		micro.WrapHandler(wrapper.NewAuthWrapper(a)),
+		micro.WrapHandler(
+			opentelemetry.NewHandlerWrapper(),
+			wrapper.NewRequestWrapper(),
+			wrapper.NewAuthWrapper(a)),
 
-		micro.WrapSubscriber(opentelemetry.NewSubscriberWrapper()),
-		micro.WrapSubscriber(wrapper.LogSubWrapper()))
+		micro.WrapSubscriber(
+			opentelemetry.NewSubscriberWrapper(),
+			wrapper.LogSubWrapper()))
 
 	boardV1.RegisterPostServiceHandler(
 		service.Server(),
