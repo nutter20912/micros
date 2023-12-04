@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/viper"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/stdout/stdoutmetric"
 	"go.opentelemetry.io/otel/exporters/stdout/stdouttrace"
@@ -38,6 +39,10 @@ func SetupGlobalOTelSDK(ctx context.Context, serviceName, serviceVersion string)
 		}
 		shutdownFuncs = nil
 		return err
+	}
+
+	if viper.GetBool("otel.disabled") {
+		return
 	}
 
 	// handleErr calls shutdown for cleanup and makes sure that all errors are returned.
