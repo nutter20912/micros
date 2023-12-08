@@ -26,6 +26,9 @@ build-image:
   before_script:
     - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
   script:
+    - echo $IMAGE_TAG
+    - echo $IMAGE_NAME:latest
     - docker build --target=image --build-arg="APP_NAME=$APP_NAME" -f=docker/Dockerfile -t=$IMAGE_TAG .
     - docker tag $IMAGE_TAG $IMAGE_NAME:latest
-    - docker push --all-tags $IMAGE_NAME
+    - docker images
+    - docker push -a $IMAGE_NAME
