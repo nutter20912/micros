@@ -114,14 +114,14 @@ func (s *walletSubscriber) addSpotOrderEvent(
 		return err
 	}
 
-	if !msg.Success {
-		return nil
-	}
-
 	s.Event.Dispatch(ctx, event.Notify{
 		Channel: fmt.Sprintf("user.%s", spotOrderEvent.UserId),
 		Name:    "SpotOrderEvent",
 		Payload: spotOrderEvent})
+
+	if !msg.Success {
+		return nil
+	}
 
 	p := models.SpotPosition{
 		UserId:   spotOrderEvent.UserId,
